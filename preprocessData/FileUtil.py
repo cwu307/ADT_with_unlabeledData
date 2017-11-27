@@ -13,8 +13,6 @@ output:
 '''
 def getFilePathList(folderpath, ext):
     allfiles = listdir(folderpath)
-    print(listdir(folderpath))
-    quit()
     filePathList = []
     filenames = []
     for filename in allfiles:

@@ -10,7 +10,7 @@ CW @ GTCMT 2017
 '''
 import numpy as np
 from os import listdir, mkdir
-from os.path import isdir
+from os.path import isdir, isfile
 from librosa.core import load, stft
 from librosa.decompose import hpss
 
@@ -39,6 +39,9 @@ output:
 '''
 def getFilePathList(folderpath, ext):
     allfiles = listdir(folderpath)
+    for item in allfiles:
+        if item[0] == '.':
+            allfiles.remove(item)
     allfiles = sorted(allfiles, key=lambda f: int(f.split("_")[0]))
     filePathList = []
     filenames = []
@@ -70,11 +73,15 @@ def getSegmentFromSong(y, sr, norm_flag, start_loc, duration):
         istart = round(0.5 * len(y)) 
         iend = istart + duration_in_samples
     if iend > len(y):
-        print('the original file is shorter than requested duration, zero padding')
-        y = np.concatenate((y, np.zeros(len(y) - iend + 1, 1)), axis=0)
+        print('the original file is shorter than requested duration, take from beginning')
+        istart = 0
+        iend = istart + duration_in_samples
     y_segment = y[int(istart):int(iend)]
     return y_segment
 
+'''
+check 
+'''
 def checkSaveRepos(save_repo):
     if not isdir(save_repo):
         print('%s does not exist, making new directory...' % save_repo)
@@ -82,33 +89,44 @@ def checkSaveRepos(save_repo):
     return(save_repo)
 
 
-def preprocUnlabeledDataset(UNLABELED_DATA_DIR, sr, window_size, hop_size, num_song_per_genre, ext_type):
+def preprocUnlabeledDataset(UNLABELED_DATA_DIR, METADATA_DIR):
     genre_info = getGenres(UNLABELED_DATA_DIR)
     print('checking stft save repositories...')
     save_stft_repo = checkSaveRepos('./stft/')
     save_stft_p_repo = checkSaveRepos('./stft_p/')
-    
-    for genre, genre_path in genre_info:
-        print('checking genre repositories...')
+    sr = 44100
+    window_size = 2048
+    hop_size = 512
+    ext_type = 'mp3'
+    tmp = np.load(METADATA_DIR)
+    clean_list = tmp[0]
+    problem_list = tmp[1]
+
+    for path, genre in clean_list:
+        print('checking genre repositories... %s' % genre)
         save_genre_repo = checkSaveRepos(save_stft_repo + genre + '/')
-        save_genre_p_repo = checkSaveRepos(save_stft_p_repo + genre + '/')
-        song_list, songnames = getFilePathList(genre_path, ext_type)
+        save_genre_p_repo = checkSaveRepos(save_stft_p_repo + genre + '/') 
+      
+        tmp = path.split('/')
+        file_name = tmp[3]
+        song_name = file_name.split('.')[0]
+        song_path = UNLABELED_DATA_DIR + genre + '/' + file_name
+        stft_file_path = save_genre_repo + song_name + '.npy'
+        stft_p_file_path = save_genre_p_repo + song_name + '.npy'
 
-        for i in range(0, num_song_per_genre):
-            song_path = song_list[i]
-            songname = songnames[i]
-            print('processing song: %s' % songname)
+        if isfile(stft_file_path) and isfile(stft_p_file_path):
+            print('file already exist! go to next song')
+        else:    
+            print('processing song: %s' % song_name)
             y, sr = load(song_path, sr=sr) #this function takes care of both sr and mono
-            y_segment = getSegmentFromSong(y, sr, True, 'middle', 30)
-
+            y_segment = getSegmentFromSong(y, sr, True, 'middle', 29)
+            #print(y_segment)
             print('computing STFT and HPSS')
             Y = stft(y_segment, n_fft=window_size, hop_length=hop_size, window='hann')
             Y_mag = abs(Y)
             H, P = hpss(Y_mag, margin=1.0) #Y = H + P
 
             print('saving results...')
-            stft_file_path = save_genre_repo + songname + '.npy'
-            stft_p_file_path = save_genre_p_repo + songname + '.npy'
             np.save(stft_file_path, Y_mag)
             np.save(stft_p_file_path, P)
     return ()
@@ -116,12 +134,8 @@ def preprocUnlabeledDataset(UNLABELED_DATA_DIR, sr, window_size, hop_size, num_s
 
 def main():
     UNLABELED_DATA_DIR = '/home/../../data/unlabeledDrumDataset/audio/'
-    sr = 44100
-    window_size = 2048
-    hop_size = 512
-    num_song_per_genre = 1900
-    ext_type = 'mp3'
-    preprocUnlabeledDataset(UNLABELED_DATA_DIR, sr, window_size, hop_size, num_song_per_genre, ext_type)
+    METADATA_DIR = './unlabeled_data_cleanup_metadata.npy'
+    preprocUnlabeledDataset(UNLABELED_DATA_DIR, METADATA_DIR)
     print('Finished')
     return()
 

@@ -70,22 +70,22 @@ def main():
     enstDir = '/data/labeled_drum_datasets/CW_ENST_minus_one_wet_new_ratio/'
     enstList = getEnstDataList(enstDir)
     displayList(enstList)
-    np.save('enstList.npy', enstList)
+    np.save('./dataLists/enstList.npy', enstList)
 
     rbmaDir = '/data/labeled_drum_datasets/2017_mirex/RBMA/'
     rbmaList = getRbmaDataList(rbmaDir)
     displayList(rbmaList)
-    np.save('rbmaList.npy', rbmaList)
+    np.save('./dataLists/rbmaList.npy', rbmaList)
 
     m2005Dir = '/data/labeled_drum_datasets/2017_mirex/2005/'
     m2005List = get2005List(m2005Dir)
     displayList(m2005List)
-    np.save('m2005List.npy', m2005List)
+    np.save('./dataLists/m2005List.npy', m2005List)
 
     mdbDir = '/data/labeled_drum_datasets/MDB Drums/'
     mdblist = getMdbDataList(mdbDir)
     displayList(mdblist)
-    np.save('mdbList.npy', mdblist)
+    np.save('./dataLists/mdbList.npy', mdblist)
     return()
 
 if __name__ == "__main__":

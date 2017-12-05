@@ -15,7 +15,7 @@ from keras.models import Model
 Testing similar architecture as described in Keunwoochoi's paper
 '''
 def createAeModel(inputDim, inputDim2, embedDim, selectedOptimizer, selectedLoss):
-    print('autoencoder model')
+    #print('autoencoder model')
     input = Input(shape=(1, inputDim, inputDim2)) #1 x 128 x 128
     out1 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer='he_normal')(input) #32 x 128 x 128
     out1 = BatchNormalization()(out1)

@@ -9,15 +9,23 @@ sys.path.insert(0, '../autoencoder')
 
 from keras.models import load_model
 from keras.optimizers import Adam
-from librosa.feature import melspectrogram
+from librosa.feature import melspectrogram, mfcc
 from librosa.core import load, stft
 from FileUtil import reshapeInputTensor, convert2dB, scaleTensorTrackwise
 from dnnModels import createAeModel
 from FileUtil import averageActivationMap, standardizeTensorTrackwise, normalizeTensorTrackwiseL1, convert2dB
-preprocessingFlag = True
 
-def extractConvFeatures(filepath, modelSavePath):
-    y, sr = load(filepath, sr=44100, mono=True)
+
+'''
+convFeatures = extractConvFeatures(filePath, modelSavePath)
+input:
+    filePath: str, path to the target audio file
+    modelSavePath: str, path where the CNN model is stored
+output:
+    convFeatures: ndarray, numFeatures x numBlock
+'''
+def extractConvFeatures(filePath, modelSavePath):
+    y, sr = load(filePath, sr=44100, mono=True)
     y = np.divide(y, max(abs(y)))
     S = stft(y, n_fft=2048, hop_length=512, window='hann')
     inputMatrix = abs(S)
@@ -36,8 +44,15 @@ def extractConvFeatures(filepath, modelSavePath):
         convFeatures = lay5OutFlat[:, 0:numBlock]
     return convFeatures
 
-def extractRandomConvFeatures(filepath, modelSavePath):
-    y, sr = load(filepath, sr=44100, mono=True)
+'''
+convFeatures = extractRandomConvFeatures(filePath)
+input:
+    filePath: str, path to the target audio file
+output:
+    convFeatures: ndarray, numFeatures x numBlock
+'''
+def extractRandomConvFeatures(filePath):
+    y, sr = load(filePath, sr=44100, mono=True)
     y = np.divide(y, max(abs(y)))
     S = stft(y, n_fft=2048, hop_length=512, window='hann')
     inputMatrix = abs(S)
@@ -98,21 +113,42 @@ output:
 def prepareConvnetInput(inputMatrix):    
     inputMatrixMel = melspectrogram(S=inputMatrix, sr=44100, n_fft=2048, hop_length=512, power=2.0, n_mels=128, fmin=0.0, fmax=20000)
     inputTensor = np.expand_dims(inputMatrixMel, axis=0)
-    if preprocessingFlag:
-        inputTensor = convert2dB(inputTensor)
+    inputTensor = convert2dB(inputTensor)
     inputTensor = scaleTensorTrackwise(inputTensor)
     inputTensor = reshapeInputTensor(inputTensor)
     inputTensor = np.expand_dims(inputTensor, axis=1) #add batch dimension 1 x 1 x dim1 x dim2
     return inputTensor
 
-def extractBaselineFeatures():
-    return()
 
-def main():
+'''
+baselineFeatures = extractBaselineFeatures(filePath)
+input:
+    filePath: str, path to the target audio file
+output:
+    baselineFeatures: ndarray, numFeatures x numBlock
+                      the features are the concatenation of 
+                      [20 MFCCs, 
+                       20 delta MFCCs
+                       20 delta delta MFCCs]
+'''
+def extractBaselineFeatures(filePath):
+    y, sr = load(filePath, sr=44100, mono=True)
+    y = np.divide(y, max(abs(y)))    
+    mfccs = mfcc(y=y, sr=sr, n_mfcc=20)
+    dMfccs = np.zeros(np.shape(mfccs))
+    dMfccs[:, 0:-1] = np.diff(mfccs, axis=1)
+    ddMfccs = np.zeros(np.shape(mfccs))
+    ddMfccs[:, 0:-1] = np.diff(dMfccs, axis=1)
+    baselineFeatures = np.concatenate((mfccs, dMfccs, ddMfccs), axis=0)
+    return baselineFeatures
+
+def main(): 
     modelSavePath = '../autoencoder/savedAeModels/'
-    filepath = '1_WhenYourHeartStopsBeating44.mp3'
-    convFeatures = extractRandomConvFeatures(filepath, modelSavePath)
-
+    filePath = '/data/unlabeledDrumDataset/audio/alternative-songs/1_WhenYourHeartStopsBeating44.mp3'
+    convFeatures = extractRandomConvFeatures(filePath)
+    print('A quick test of one feature extractor')
+    print('file = %s' % filePath)
+    print(np.shape(convFeatures))
     return()
 
 if __name__ == "__main__":

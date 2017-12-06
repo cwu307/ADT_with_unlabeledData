@@ -69,7 +69,7 @@ output:
 Note:
     0: kick drum
     1: snare drum
-    2: hihatz
+    2: hihat
     3: others
 '''
 def parseAnnotations(annPath):

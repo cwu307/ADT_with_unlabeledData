@@ -8,7 +8,7 @@ import time
 sys.path.insert(0, '../autoencoder')
 
 from FileUtil import scaleMatrix, scaleMatrixWithMinMax
-from sklearn.svm import SVC
+from sklearn.svm import SVC, LinearSVC
 from sklearn.model_selection import train_test_split, GridSearchCV
 
 '''
@@ -38,7 +38,13 @@ def prepareTrainingData(heldOutOption, featureOption):
         fileList_final = concateMatrix(fileList_final, fileList)
     return X_final, y_final, fileList_final 
 
-
+'''
+input:
+    all: before concatenation 2D matrix
+    new: incoming 2D matrix
+output:
+    all: after concatenation 2D matrix, concatenated along axis=0
+'''
 def concateMatrix(all, new):
     if len(all) == 0:
         all = new
@@ -46,7 +52,16 @@ def concateMatrix(all, new):
         all = np.concatenate((all, new), axis=0)
     return all
 
-
+'''
+input:
+    y_original: the original multi-classes label array
+    targetAnn: target drum
+                0: bd
+                1: sd
+                2: hh
+output:
+    y_target: binary label array (target annotation = 1, others = 0)
+'''
 def adjustTarget4Instruments(y_original, targetAnn):
     y_target = np.zeros(np.shape(y_original))
     for i in range(0, len(y_original)):
@@ -54,11 +69,22 @@ def adjustTarget4Instruments(y_original, targetAnn):
             y_target[i] = 1
     return y_target
 
+
+'''
+this function performs grid search on the SVM parameter space. The best classifier is selected based on the 10-fold cross-validation accuracy
+input:
+    X: training data, numSample x numFeature
+    y: label, numSample
+output:
+    bestClassifier
+'''
 def gridSearchClassifier(X, y):
     bestClassifier = []
     #param_grid = {'C':[0.1, 1.0, 10.0, 100.0, 1000.0], 'kernel':['rbf'], 'gamma':[1.0/np.power(2, 3), 1.0/np.power(2, 5), 1.0/np.power(2, 7), 1.0/np.power(2, 9), 'auto']}
-    param_grid = {'C':[0.1, 1.0, 10.0, 100.0, 1000.0], 'kernel':['linear'], 'max_iter':[-1]}
-    svm = SVC()
+    #param_grid = {'C':[0.1, 1.0, 10.0, 100.0, 1000.0], 'kernel':['linear'], 'max_iter':[-1]}
+    #svm = SVC()
+    param_grid = {'C':[0.1, 1.0, 10.0, 100.0, 1000.0], 'dual':[False]} 
+    svm = LinearSVC()
     tic = time.time()
     clf = GridSearchCV(svm, param_grid=param_grid, cv=10, refit=True)
     clf.fit(X, y)
@@ -68,16 +94,23 @@ def gridSearchClassifier(X, y):
     print('best cv score (accuracy) = %f' % cvBestScore)
     return bestClassifier
 
-
+'''
+input:
+    X: ndarray, training data numSample x numFeature
+    y: ndarray, training label 
+output:
+    classifiers: array with 3 classifiers in the following order [bd, sd, hh] 
+    normParams: array with parameters for normalization [maxVec, minVec]
+'''
 def getAllClassifiers(X, y):
     # shuffle data
     # train classifiers for different drums
     # save all models 
     classifiers = []
-    XTrain, XTest, yTrain, yTest = train_test_split(X, y, test_size=0.20, random_state=33)
+    XTrain, XTest, yTrain, yTest = train_test_split(X, y, test_size=0.15, random_state=33)
     # sub-sampling the training set
     # dump, XTrain, dump, yTrain = train_test_split(XTrain, yTrain, test_size=0.05, random_state=33)
-    print(len(yTrain))
+    print('there are %d samples in the training set' % len(yTrain))
     XTrainScaled, maxVec, minVec = scaleMatrix(XTrain)
     yBdTrain = adjustTarget4Instruments(yTrain, 0)
     ySdTrain = adjustTarget4Instruments(yTrain, 1)
@@ -127,7 +160,7 @@ def summarizeClassDistribution(y):
 
 def main():
     saveFolder = './trainedClassifier/'
-    allFeatureOptions = ['baseline']#, 'convRandom']#, 'convAe', 'convDae']
+    allFeatureOptions = ['baseline', 'convRandom']#, 'convAe', 'convDae']
     allHeldOutOptions = ['enst'] #, 'mdb', 'rbma', 'm2005']
     
     for featureOption in allFeatureOptions:

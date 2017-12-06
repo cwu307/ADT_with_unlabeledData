@@ -13,11 +13,11 @@ input
                 dataList is an array of tuples: (audioPath, annotationPath)
     savePath: str, the location to save the feature matrix (e.g., './featureMat/enstFeatureMat.npy')
                 the saved .npy file contains an array of [X, y, originalFilePath]
-    featureOptions: str, available options are 'convRandom', 'convAe', 'convDae', 'baseline' 
+    featureOption: str, available options are 'convRandom', 'convAe', 'convDae', 'baseline' 
 output
     None
 '''
-def getFeatureMatrix(listPath, savePath, featureOptions):
+def getFeatureMatrix(listPath, savePath, featureOption):
     dataList = np.load(listPath)
     numFiles = len(dataList)
     originalFilePath = []
@@ -29,15 +29,15 @@ def getFeatureMatrix(listPath, savePath, featureOptions):
         print('Processing file %d ...' % i)
         print(audioPath)
         print(annPath)
-        if featureOptions == 'convRandom':
+        if featureOption == 'convRandom':
             features = extractRandomConvFeatures(audioPath) #64 x M            
-        elif featureOptions == 'convAe':
+        elif featureOption == 'convAe':
             modelSavePath = '../autoencoder/savedAeModels/'
             features = extractConvFeatures(audioPath, modelSavePath)
-        elif featureOptions == 'convDae':
+        elif featureOption == 'convDae':
             modelSavePath = '../autoencoder/savedDaeModels/'
             features = extractConvFeatures(audioPath, modelSavePath)
-        elif featureOptions == 'baseline':
+        elif featureOption == 'baseline':
             features = extractBaselineFeatures(audioPath) #60 x M
         else:
             print('unknown feature option')
@@ -69,7 +69,7 @@ output:
 Note:
     0: kick drum
     1: snare drum
-    2: hihat
+    2: hihatz
     3: others
 '''
 def parseAnnotations(annPath):
@@ -109,9 +109,9 @@ def main():
     allDataList = ['./dataLists/enstList.npy', './dataLists/mdbList.npy', './dataLists/rbmaList.npy', './dataLists/m2005List.npy']
     allFeatureOptions = ['baseline', 'convRandom']
     for dataList in allDataList:
-        for featureOptions in allFeatureOptions:
-            savePath = getSavePath(dataList, './featureMat/', featureOptions)
-            getFeatureMatrix(dataList, savePath, featureOptions)
+        for featureOption in allFeatureOptions:
+            savePath = getSavePath(dataList, './featureMat/', featureOption)
+            getFeatureMatrix(dataList, savePath, featureOption)
     return()
 
 if __name__ == "__main__":

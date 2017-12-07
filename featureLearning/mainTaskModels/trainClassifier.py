@@ -161,11 +161,14 @@ def summarizeClassDistribution(y):
 def main():
     saveFolder = './trainedClassifier/'
     allFeatureOptions = ['baseline', 'convRandom']#, 'convAe', 'convDae']
-    allHeldOutOptions = ['enst'] #, 'mdb', 'rbma', 'm2005']
+    allHeldOutOptions = ['enst', 'mdb', 'rbma', 'm2005']
     
     for featureOption in allFeatureOptions:
         for heldOutOption in allHeldOutOptions:
             X_final, y_final, filelist_final = prepareTrainingData(heldOutOption, featureOption)
+            print('====================================')
+            print('current feature = %s'% featureOption)
+            print('current held out = %s'% heldOutOption)
             summarizeClassDistribution(y_final)
             classifiers, normParams = getAllClassifiers(X_final, y_final)
             classifierPath = getClassifierPath(heldOutOption, featureOption, saveFolder) 

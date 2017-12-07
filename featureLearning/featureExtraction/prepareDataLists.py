@@ -66,23 +66,45 @@ def displayList(dataList):
     return()
 
 
+# def main():
+#     enstDir = '/data/labeled_drum_datasets/CW_ENST_minus_one_wet_new_ratio/'
+#     enstList = getEnstDataList(enstDir)
+#     displayList(enstList)
+#     np.save('./dataLists/enstList.npy', enstList)
+
+#     rbmaDir = '/data/labeled_drum_datasets/2017_mirex/RBMA/'
+#     rbmaList = getRbmaDataList(rbmaDir)
+#     displayList(rbmaList)
+#     np.save('./dataLists/rbmaList.npy', rbmaList)
+
+#     m2005Dir = '/data/labeled_drum_datasets/2017_mirex/2005/'
+#     m2005List = get2005List(m2005Dir)
+#     displayList(m2005List)
+#     np.save('./dataLists/m2005List.npy', m2005List)
+
+#     mdbDir = '/data/labeled_drum_datasets/MDB Drums/'
+#     mdblist = getMdbDataList(mdbDir)
+#     displayList(mdblist)
+#     np.save('./dataLists/mdbList.npy', mdblist)
+#     return()
+
 def main():
-    enstDir = '/data/labeled_drum_datasets/CW_ENST_minus_one_wet_new_ratio/'
+    enstDir = '/Volumes/CW_MBP15/Datasets/labeled_drum_datasets/CW_ENST_minus_one_wet_new_ratio/'
     enstList = getEnstDataList(enstDir)
     displayList(enstList)
     np.save('./dataLists/enstList.npy', enstList)
 
-    rbmaDir = '/data/labeled_drum_datasets/2017_mirex/RBMA/'
+    rbmaDir = '/Volumes/CW_MBP15/Datasets/labeled_drum_datasets/2017_mirex/RBMA/'
     rbmaList = getRbmaDataList(rbmaDir)
     displayList(rbmaList)
     np.save('./dataLists/rbmaList.npy', rbmaList)
 
-    m2005Dir = '/data/labeled_drum_datasets/2017_mirex/2005/'
+    m2005Dir = '/Volumes/CW_MBP15/Datasets/labeled_drum_datasets/2017_mirex/2005/'
     m2005List = get2005List(m2005Dir)
     displayList(m2005List)
     np.save('./dataLists/m2005List.npy', m2005List)
 
-    mdbDir = '/data/labeled_drum_datasets/MDB Drums/'
+    mdbDir = '/Volumes/CW_MBP15/Datasets/labeled_drum_datasets/MDB Drums/'
     mdblist = getMdbDataList(mdbDir)
     displayList(mdblist)
     np.save('./dataLists/mdbList.npy', mdblist)

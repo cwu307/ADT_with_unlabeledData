@@ -3,6 +3,7 @@ this script is used to build feature matrices
 CW @ GTCMT 2017
 '''
 import numpy as np
+import os
 from extractFeatures import extractRandomConvFeatures, extractBaselineFeatures, extractConvFeatures
 HOPSIZE = 512
 FS = 44100.0
@@ -20,6 +21,9 @@ output
 def getFeatureMatrix(listPath, savePath, featureOption):
     dataList = np.load(listPath)
     numFiles = len(dataList)
+    saveFolder = './featureMat/'
+    if not os.path.isdir(saveFolder):
+        os.mkdir(saveFolder) 
     originalFilePath = []
     X = []
     y = []
@@ -43,16 +47,20 @@ def getFeatureMatrix(listPath, savePath, featureOption):
             print('unknown feature option')
 
         onsetInFrames, classInNum = parseAnnotations(annPath)
-
+        neighbor2Include = 1
         for j in range(0, len(classInNum)):
             if classInNum[j] != 3:
-                curIndex = onsetInFrames[j]
-                if curIndex > np.size(features, axis=1):
-                    curIndex = np.size(features, axis=1) - 1
-                featureSlice = features[:, curIndex]
-                X.append(featureSlice)
-                y.append(classInNum[j])
-                originalFilePath.append(audioPath)
+                mid = onsetInFrames[j]
+                for k in range(mid-neighbor2Include, mid+neighbor2Include+1):
+                    curIndex = k
+                    if curIndex < 0:
+                        curIndex = 0
+                    if curIndex >= np.size(features, axis=1):
+                        curIndex = np.size(features, axis=1) - 1
+                    featureSlice = features[:, curIndex]
+                    X.append(featureSlice)
+                    y.append(classInNum[j])
+                    originalFilePath.append(audioPath)
     print(np.shape(X))
     print(np.shape(y))
     print('saving results to %s' % savePath)

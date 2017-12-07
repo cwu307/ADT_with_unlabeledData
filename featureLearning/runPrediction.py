@@ -13,7 +13,7 @@ from FileUtil import scaleMatrixWithMinMax
 from buildFeatMatrix import parseAnnotations
 from trainClassifier import getClassifierPath
 from extractFeatures import extractRandomConvFeatures, extractBaselineFeatures, extractConvFeatures
-from madmom.features.onsets import CNNOnsetProcessor
+from madmom.features.onsets import CNNOnsetProcessor, RNNOnsetProcessor
 from madmom.features.onsets import OnsetPeakPickingProcessor
 
 HOPSIZE = 512
@@ -136,7 +136,7 @@ def predictOneSong(audioPath, featureOption, clfModelPath):
 
 def main():
     allFeatureOptions = ['baseline', 'convRandom']#, 'convAe', 'convDae']
-    allHeldOutOptions = ['enst'] #, 'mdb', 'rbma', 'm2005']
+    allHeldOutOptions = ['enst', 'mdb', 'rbma', 'm2005']
     
     for featureOption in allFeatureOptions:
         for heldOutOption in allHeldOutOptions:

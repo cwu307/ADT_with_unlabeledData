@@ -10,7 +10,7 @@ sys.path.insert(0, './autoencoder')
 sys.path.insert(0, './mainTaskModels')
 sys.path.insert(0, './featureExtraction')
 from FileUtil import scaleMatrixWithMinMax
-from buildFeatMatrix import parseAnnotations
+from buildFeatMatrix import parseAnnotations, featureSplicing
 from trainClassifier import getClassifierPath
 from extractFeatures import extractRandomConvFeatures, extractBaselineFeatures, extractConvFeatures
 from madmom.features.onsets import CNNOnsetProcessor, RNNOnsetProcessor
@@ -99,12 +99,10 @@ def predictOneSong(audioPath, featureOption, clfModelPath):
     X = []
     timeStamp = []
     for i in range(0, len(onsetsInFrames)):
-        curIndex = int(onsetsInFrames[i])
+        midIndex = int(onsetsInFrames[i])
         curTime  = onsets[i]
-        if curIndex > np.size(features, axis=1):
-            curIndex = np.size(features, axis=1) - 1
-        featureSlice = features[:, curIndex]
-        X.append(featureSlice)
+        splicedFeature = featureSplicing(features, midIndex, 1, 2)
+        X.append(splicedFeature)
         timeStamp.append(curTime)
     #print(np.shape(X))
     #==== drum transcription

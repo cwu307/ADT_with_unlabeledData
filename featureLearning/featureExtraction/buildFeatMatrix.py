@@ -50,22 +50,44 @@ def getFeatureMatrix(listPath, savePath, featureOption):
         neighbor2Include = 1
         for j in range(0, len(classInNum)):
             if classInNum[j] != 3:
-                mid = onsetInFrames[j]
-                for k in range(mid-neighbor2Include, mid+neighbor2Include+1):
-                    curIndex = k
-                    if curIndex < 0:
-                        curIndex = 0
-                    if curIndex >= np.size(features, axis=1):
-                        curIndex = np.size(features, axis=1) - 1
-                    featureSlice = features[:, curIndex]
-                    X.append(featureSlice)
-                    y.append(classInNum[j])
-                    originalFilePath.append(audioPath)
+                midIndex = onsetInFrames[j]
+                splicedFeature = featureSplicing(features, midIndex, 1, 2)
+                X.append(splicedFeature)
+                y.append(classInNum[j])
+                originalFilePath.append(audioPath)
     print(np.shape(X))
     print(np.shape(y))
     print('saving results to %s' % savePath)
     np.savez(savePath, X, y, originalFilePath)
     return()
+
+
+'''
+splicedFeature = featureSplicing(features, midIndex, frontFrame, rearFrame)
+input:
+    features: ndarray feature matrix, numFeature by numBlock
+    midIndex: int, the index of current frame (middle)
+    frontFrame: int, number of frame to look ahead
+    rearFrame: int, number of frame to look after
+output:
+    splicedFeature: vector, (M,)
+    note: the spliced feature would be the concatenation of the previous 
+          and latter frames with the middle frame
+'''
+def featureSplicing(features, midIndex, frontFrame, rearFrame):
+    numFeature, numBlock = np.shape(features)
+    splicedFeature = []
+    for i in range(midIndex - frontFrame, midIndex + rearFrame + 1):
+        if i < 0 or i >= numBlock:
+            curFrame = np.zeros((numFeature,))
+        else:
+            curFrame = features[:, i]
+        if len(splicedFeature) == 0:
+            splicedFeature = curFrame
+        else:
+            splicedFeature = np.concatenate((splicedFeature, curFrame), axis=0)
+    return splicedFeature
+
 
 '''
 onsetInFrames, classInNum = parseAnnotations(annPath)

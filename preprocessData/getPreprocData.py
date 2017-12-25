@@ -65,6 +65,7 @@ output
 def getSegmentFromSong(y, sr, norm_flag, start_loc, duration):
     duration_in_samples = round(duration * sr)
     if norm_flag:
+        print('normalize the file by the maximum value')
         y = np.divide(y, np.max(abs(y)))
     if start_loc == 'beginning':
         istart = 0
@@ -73,9 +74,16 @@ def getSegmentFromSong(y, sr, norm_flag, start_loc, duration):
         istart = round(0.5 * len(y)) 
         iend = istart + duration_in_samples
     if iend > len(y):
-        print('the original file is shorter than requested duration, take from beginning')
+        print('the original file is shorter than requested duration. Change starting point and try again')
         istart = 0
         iend = istart + duration_in_samples
+    if iend > len(y):
+        print('the duration is still not enough. Zero padding')
+        istart = 0
+        iend = istart + duration_in_samples
+        gap = iend - len(y)
+        zeropad = np.zeros((gap, 1))
+        y = np.concatenate((y, zeropad), axis=0)
     y_segment = y[int(istart):int(iend)]
     return y_segment
 

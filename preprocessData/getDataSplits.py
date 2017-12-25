@@ -81,7 +81,10 @@ def checkGenreBalance(all_lists):
         dist = {}
     return ()
 
-
+'''
+this function splits the entire dataset list into [training, validation, test] accordingly 
+the resulting array is saved as .npy file
+'''
 def getDataSplits(DATA_DIR, num_songs_per_genre):
     all_lists = []
     all_training_set = []
@@ -92,12 +95,12 @@ def getDataSplits(DATA_DIR, num_songs_per_genre):
         print('- working on genre = %s ...' % genre)
         genre_path = DATA_DIR + genre + '/*.npy'
         all_files = glob(genre_path)
-        np.random.shuffle(all_files)
+        np.random.shuffle(all_files) #this shuffling is probably redundant...
         all_files = all_files[0:num_songs_per_genre]
         all_files = [(path, genre) for path in all_files]
         print('- spliting data...')
-        training_set, tmp = train_test_split(all_files, test_size=0.3, random_state=10)
-        validation_set, test_set = train_test_split(tmp, test_size=0.5, random_state=10)
+        training_set, other = train_test_split(all_files, test_size=0.3, random_state=10)
+        validation_set, test_set = train_test_split(other, test_size=0.5, random_state=10)
         print('- concatenating results...')
         all_training_set = concatenateMatrix(all_training_set, training_set, 0)
         all_test_set = concatenateMatrix(all_test_set, test_set, 0)

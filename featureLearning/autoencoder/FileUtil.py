@@ -89,7 +89,7 @@ def reshapeInputTensor(data_tensor):
     numSample, numFreq, numBlock = np.shape(data_tensor)
     numSubBlock = int(np.floor(np.divide(numBlock, numFreq)))
     numBlock_mod = int(np.multiply(numSubBlock, numFreq))
-    data_tensor  = data_tensor[:, :, 0:numBlock_mod]
+    data_tensor  = data_tensor[:, :, 0:numBlock_mod] #discard a few data points if not matched
     for i in range(0, numSample):
         cur = data_tensor[i, :, :]
         for j in range(0, numSubBlock):
@@ -171,13 +171,17 @@ def normalizeTensorTrackwiseL1(data_tensor):
             data_tensor[i, :, :] = 0 * data_tensor[i, :, :]
     return data_tensor
 
+'''
+convert a power spectrogram into dB (element-wise operation)
+with a predefined dynamic range (80dB) 
+'''
 def convert2dB(data_tensor):
     numSample, numFreq, numBlock = np.shape(data_tensor)
     for i in range(0, numSample):
         X = data_tensor[i, :, :]
         X = 10 * np.log10(np.maximum(X, 10e-6))
-        X =  X - np.max(X)
-        X = np.maximum(X, -80)
+        X =  X - np.max(X) #shift downward, max = 0
+        X = np.maximum(X, -80) #dynamic range = 80dB
         data_tensor[i, :, :] = X
     return data_tensor
 

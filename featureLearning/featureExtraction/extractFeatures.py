@@ -59,7 +59,6 @@ def extractRandomConvFeatures(filePath):
     inputDim = 128
     inputDim2 = 128
     embedDim = 8
-    numEpochs = 30
     selectedOptimizer = Adam(lr=0.001)
     selectedLoss = 'mse'
     ae, ext1, ext2, ext3, ext4, ext5 = createAeModel(inputDim, inputDim2, embedDim, selectedOptimizer, selectedLoss)
@@ -108,15 +107,17 @@ inputTensor = prepareConvnetInput(inputMatrix)
 input:
     inputMatrix: magnitude spectrogram, numFreq x numBlock
 output:
-    inputTensor: numBatch x numChannel x dim1 x dim2 
+    inputTensor: numSeg x numChannel x dim1 x dim2 
+    dim1 = n_mels
+    dim2 = dim1
 '''
 def prepareConvnetInput(inputMatrix):    
     inputMatrixMel = melspectrogram(S=inputMatrix, sr=44100, n_fft=2048, hop_length=512, power=2.0, n_mels=128, fmin=0.0, fmax=20000)
-    inputTensor = np.expand_dims(inputMatrixMel, axis=0)
-    inputTensor = convert2dB(inputTensor)
-    inputTensor = scaleTensorTrackwise(inputTensor)
-    inputTensor = reshapeInputTensor(inputTensor)
-    inputTensor = np.expand_dims(inputTensor, axis=1) #add batch dimension 1 x 1 x dim1 x dim2
+    inputTensor = np.expand_dims(inputMatrixMel, axis=0) #add a dummy dimension for sample count
+    inputTensor = convert2dB(inputTensor) #the input is the power of mel spectrogram
+    inputTensor = scaleTensorTrackwise(inputTensor) #scale the dB scaled tensor to range of {0, 1}
+    inputTensor = reshapeInputTensor(inputTensor) #break one long matrix into stacked segments
+    inputTensor = np.expand_dims(inputTensor, axis=1) #add channel dimension 1 x 1 x dim1 x dim2
     return inputTensor
 
 

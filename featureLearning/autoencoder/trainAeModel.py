@@ -13,6 +13,8 @@ from dnnModels import createAeModel
 from FileUtil import convert2dB, scaleTensorTrackwise, reshapeInputTensor, invReshapeInputTensor
 from librosa.feature import melspectrogram
 from tensorboard_logger import configure, log_value
+from os.path import isdir
+from os import mkdir
 preprocessingFlag = True
 
 def trainAeModel(sourceLists, targetLists, modelSavePath, tbpath):
@@ -86,6 +88,34 @@ def trainAeModel(sourceLists, targetLists, modelSavePath, tbpath):
     ext4.save(ext4Path)
     ext5.save(ext5Path)
 
+def getRandomWeightAeModel(modelSavePath):
+    if not isdir(modelSavePath):
+        mkdir(modelSavePath)
+    #==== define data path
+    ae_path = modelSavePath + 'ae.h5'
+    ext1Path = modelSavePath + 'ext1.h5'
+    ext2Path = modelSavePath + 'ext2.h5'
+    ext3Path = modelSavePath + 'ext3.h5'
+    ext4Path = modelSavePath + 'ext4.h5'
+    ext5Path = modelSavePath + 'ext5.h5'
+
+    #==== define DNN parameters
+    inputDim = 128
+    inputDim2 = 128
+    embedDim = 8
+    selectedOptimizer = Adam(lr=0.001)
+    selectedLoss = 'mse'
+    ae, ext1, ext2, ext3, ext4, ext5 = createAeModel(inputDim, inputDim2, embedDim, selectedOptimizer, selectedLoss)
+
+    print('saving trained models...')
+    ae.save(ae_path)
+    ext1.save(ext1Path)
+    ext2.save(ext2Path)
+    ext3.save(ext3Path)
+    ext4.save(ext4Path)
+    ext5.save(ext5Path)
+
+
 def prepareData(sourceFilePath, targetFilePath):
     sourceFilepathAdjusted = '../../preprocessData' + sourceFilePath[1:]
     targetFilepathAdjusted = '../../preprocessData' + targetFilePath[1:]
@@ -107,15 +137,25 @@ def prepareData(sourceFilePath, targetFilePath):
     return source, target
 
 def main():
-    stftLists = '../../preprocessData/stft_train_test_splits.npy'
-    stftPLists = '../../preprocessData/stft_p_train_test_splits.npy'
-    modelSavePath = './savedAeModels/'
-    tbpath = './tblogs/ae_run'
-    trainAeModel(sourceLists=stftLists, targetLists=stftLists, modelSavePath=modelSavePath, tbpath=tbpath)
+    # stftLists = '../../preprocessData/stft_train_test_splits.npy'
+    # stftPLists = '../../preprocessData/stft_p_train_test_splits.npy'
 
+    #==== AE
+    # print('Getting autoencoder models')
+    # modelSavePath = './savedAeModels/'
+    # tbpath = './tblogs/ae_run'
+    # trainAeModel(sourceLists=stftLists, targetLists=stftLists, modelSavePath=modelSavePath, tbpath=tbpath)
+
+    #==== DAE
+    # print('Getting denoising autoencoder models')
     # modelSavePath = './savedDaeModels/'
     # tbpath = './tblogs/dae_run'   
     # trainAeModel(sourceLists=stftLists, targetLists=stftPLists, modelSavePath=modelSavePath, tbpath=tbpath)
+
+    #==== Random Weights
+    print('Getting models with random weights')
+    modelSavePath = './savedRandomAeModels/'
+    getRandomWeightAeModel(modelSavePath=modelSavePath)
     return()
 
 if __name__ == "__main__":

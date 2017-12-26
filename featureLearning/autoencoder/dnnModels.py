@@ -10,13 +10,14 @@ import numpy as np
 import keras.backend as K
 from keras.layers import Input, Dense, Convolution2D, MaxPooling2D, Conv2DTranspose, GlobalAveragePooling2D, UpSampling2D, BatchNormalization, Flatten, Dropout
 from keras.models import Model
-from keras.initializers import he_normal
+from keras.initializers import he_normal, RandomNormal
 
 '''
 Testing similar architecture as described in Keunwoochoi's paper
 '''
 def createAeModel(inputDim, inputDim2, embedDim, selectedOptimizer, selectedLoss):
-    fixed_init = he_normal(seed=10)
+    #fixed_init = RandomNormal(seed=0)
+    fixed_init = he_normal(seed=0)
     #print('autoencoder model')
     input = Input(shape=(1, inputDim, inputDim2)) #1 x 128 x 128
     out1 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(input) #32 x 128 x 128
@@ -65,7 +66,7 @@ def createAeModel(inputDim, inputDim2, embedDim, selectedOptimizer, selectedLoss
 Testing similar architecture as described in Keunwoochoi's paper
 '''
 def createModel_cqt_classification_fma_medium(input_dim, input_dim2, selected_optimizer, selected_loss):
-    fixed_init = he_normal(seed=10)
+    fixed_init = he_normal(seed=0)
     print('classifier model')
     input = Input(shape=(1, input_dim, input_dim2)) #1 x 80 x 1280 
     out1 = Convolution2D(32, (3, 3), activation='elu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(input) #32 x 80 x 1280

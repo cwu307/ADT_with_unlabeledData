@@ -4,7 +4,7 @@ CW @ GTCMT 2017
 '''
 import numpy as np
 import os
-from extractFeatures import extractRandomConvFeatures, extractBaselineFeatures, extractConvFeatures
+from extractFeatures import extractRandomConvFeatures, extractBaselineFeatures, extractConvFeatures, checkNan
 HOPSIZE = 512
 FS = 44100.0
 
@@ -34,7 +34,8 @@ def getFeatureMatrix(listPath, savePath, featureOption):
         print(audioPath)
         print(annPath)
         if featureOption == 'convRandom':
-            features = extractRandomConvFeatures(audioPath) #64 x M            
+            modelSavePath = '../autoencoder/savedRandomAeModels/'
+            features = extractRandomConvFeatures(audioPath, modelSavePath) #64 x M            
         elif featureOption == 'convAe':
             modelSavePath = '../autoencoder/savedAeModels/'
             features = extractConvFeatures(audioPath, modelSavePath)
@@ -46,12 +47,16 @@ def getFeatureMatrix(listPath, savePath, featureOption):
         else:
             print('unknown feature option')
 
+        print(np.max(features))
+        print(np.min(features))
+
         onsetInFrames, classInNum = parseAnnotations(annPath)
-        neighbor2Include = 1
+        frontFrame = 1
+        rearFrame = 2
         for j in range(0, len(classInNum)):
             if classInNum[j] != 3:
                 midIndex = onsetInFrames[j]
-                splicedFeature = featureSplicing(features, midIndex, 1, 2)
+                splicedFeature = featureSplicing(features, midIndex, frontFrame, rearFrame)
                 X.append(splicedFeature)
                 y.append(classInNum[j])
                 originalFilePath.append(audioPath)

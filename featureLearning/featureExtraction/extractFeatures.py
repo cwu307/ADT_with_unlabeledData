@@ -51,20 +51,16 @@ input:
 output:
     convFeatures: ndarray, numFeatures x numBlock
 '''
-def extractRandomConvFeatures(filePath):
+def extractRandomConvFeatures(filePath, modelSavePath):
     y, sr = load(filePath, sr=44100, mono=True)
     y = np.divide(y, max(abs(y)))
     S = stft(y, n_fft=2048, hop_length=512, window='hann')
     inputMatrix = abs(S)
-    inputDim = 128
-    inputDim2 = 128
-    embedDim = 8
-    selectedOptimizer = Adam(lr=0.001)
-    selectedLoss = 'mse'
-    ae, ext1, ext2, ext3, ext4, ext5 = createAeModel(inputDim, inputDim2, embedDim, selectedOptimizer, selectedLoss)
+    ext5Path = modelSavePath + 'ext5.h5'
+    ext5_model = load_model(ext5Path)
     numFreq, numBlock = np.shape(inputMatrix)
     inputTensor = prepareConvnetInput(inputMatrix)
-    lay5Out = ext5.predict(inputTensor, batch_size=1)  # N x 8 x 8 x 128
+    lay5Out = ext5_model.predict(inputTensor, batch_size=1)  # N x 8 x 8 x 128
     lay5OutFlat = flattenConvFeatures(lay5Out)
     numFeat, numBlock2  = np.shape(lay5OutFlat)
     #zero-padding here
@@ -75,6 +71,16 @@ def extractRandomConvFeatures(filePath):
         convFeatures = lay5OutFlat[:, 0:numBlock]
     return convFeatures
 
+def checkNan(inputTensor):
+    nanCount = 0
+    for element in np.nditer(inputTensor):
+        if np.isnan(element):
+            nanCount += 1
+
+    if nanCount > 0:
+        return True
+    else:
+        return False
 
 '''
 layerOutFlat = flattenConvFeatures(layerOut)

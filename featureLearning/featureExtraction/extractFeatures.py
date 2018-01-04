@@ -87,7 +87,7 @@ layerOutFlat = flattenConvFeatures(layerOut)
 input: 
     layerOut: numSample x numChannel x dim1 x dim2 (e.g., 19 x 8 x 8 x 128)
 output:
-    layerOutFlat: numSample2 x numFeatures (e.g., 64 x 2432)
+    layerOutFlat: numSample2 x numFeatures (e.g., 8 x 2432)
 '''
 def flattenConvFeatures(layerOut):
     numSample = np.size(layerOut, axis=0)
@@ -97,6 +97,8 @@ def flattenConvFeatures(layerOut):
         tmp1 = []
         for j in range(0, numChannel):
             cur = layerOut[i, j, :, :]
+            cur = np.mean(cur, axis=0)
+            cur = np.expand_dims(cur, axis=0)
             if len(tmp1) == 0:
                 tmp1 = cur
             else:  

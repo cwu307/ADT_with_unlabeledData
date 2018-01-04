@@ -102,8 +102,8 @@ def getRandomWeightAeModel(modelSavePath):
     #==== define DNN parameters
     inputDim = 128
     inputDim2 = 128
-    embedDim = 8
-    selectedOptimizer = Adam(lr=0.001)
+    embedDim = 32
+    selectedOptimizer = Adam(lr=0.1)
     selectedLoss = 'mse'
     ae, ext1, ext2, ext3, ext4, ext5 = createAeModel(inputDim, inputDim2, embedDim, selectedOptimizer, selectedLoss)
 

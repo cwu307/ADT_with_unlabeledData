@@ -131,8 +131,8 @@ def getPredictionListPath(methodOption, heldOutOption, featureOption):
 
 def main():
     methodOption = 'featureLearning'
-    allHeldOutOptions = ['enst', 'mdb', 'rbma', 'm2005']
-    allFeatureOptions = ['baseline', 'convRandom']#, 'convAe', 'convDae']
+    allHeldOutOptions = ['enst']#['enst', 'mdb', 'rbma', 'm2005']
+    allFeatureOptions = ['baseline']#['baseline', 'convRandom']#, 'convAe', 'convDae']
 
     for heldOutOption in allHeldOutOptions:
         for featureOption in allFeatureOptions:

@@ -60,6 +60,8 @@ def scaleMatrix(matrix):
     maxVector = np.max(matrix, axis=0)
     minVector = np.min(matrix, axis=0)
     matrix_scaled = np.divide(np.subtract(matrix, minVector), np.subtract(maxVector, minVector))
+    if np.min(np.subtract(maxVector, minVector)) == 0:
+        print('problem encountered in scaleMatrix()')
     return matrix_scaled, maxVector, minVector
 
 '''
@@ -73,8 +75,41 @@ output:
 
 def scaleMatrixWithMinMax(matrix, maxVector, minVector):
     matrix_scaled = np.divide(np.subtract(matrix, minVector), np.subtract(maxVector, minVector))
+    if np.min(np.subtract(maxVector, minVector)) == 0:
+        print('problem encountered in scaleMatrixWithMinMax()')
     return matrix_scaled
 
+
+'''
+input:
+    matrix: N by M float matrix, N is the #blocks, M is the #freq bins
+output:
+    matrix_scaled: N by M float matrix
+    avgVector: 1 by M float vector of mean values for each bin
+    stdVector: 1 by M float vector of std values for each bin
+'''
+def zscoreMatrix(matrix):
+    avgVector = np.mean(matrix, axis=0)
+    stdVector = np.std(matrix, axis=0)
+    matrix_scaled = np.divide(np.subtract(matrix, avgVector), stdVector)
+    if np.min(stdVector) == 0:
+        print('problem encountered in zscoreMatrix()')
+    return matrix_scaled, avgVector, stdVector
+
+'''
+input:
+    matrix: N by M float matrix, N is the #blocks, M is the #freq bins
+    avgVector: 1 by M float vector of mean values for each bin
+    stdVector: 1 by M float vector of std values for each bin
+output:
+    matrix_scaled: N by M float matrix
+'''
+
+def zscoreMatrixWithAvgStd(matrix, avgVector, stdVector):
+    matrix_scaled = np.divide(np.subtract(matrix, avgVector), stdVector)
+    if np.min(stdVector) == 0:
+        print('problem encountered in zscoreMatrixWithAvgStd()')
+    return matrix_scaled
 
 '''
 input:

@@ -6,9 +6,11 @@ import numpy as np
 import sys
 import time
 sys.path.insert(0, '../autoencoder')
-
-from FileUtil import scaleMatrix, scaleMatrixWithMinMax
+sys.path.insert(0, '../featureExtraction')
+from extractFeatures import checkNan
+from FileUtil import scaleMatrix, scaleMatrixWithMinMax, zscoreMatrix, zscoreMatrixWithAvgStd
 from sklearn.svm import SVC, LinearSVC
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 
 '''
@@ -80,16 +82,25 @@ output:
 '''
 def gridSearchClassifier(X, y):
     bestClassifier = []
-    #param_grid = {'C':[0.1, 1.0, 10.0, 100.0, 1000.0], 'kernel':['rbf'], 'gamma':[1.0/np.power(2, 3), 1.0/np.power(2, 5), 1.0/np.power(2, 7), 1.0/np.power(2, 9), 'auto']}
-    #param_grid = {'C':[0.1, 1.0, 10.0, 100.0, 1000.0], 'kernel':['linear'], 'max_iter':[-1]}
-    #svm = SVC()
-    param_grid = {'C':[0.1, 1.0, 10.0, 100.0, 1000.0], 'dual':[False]} 
+
+    #==== Linear SVM (commented out for experimenting)
+    param_grid = {'C':[0.1, 1.0, 10.0, 100.0, 1000.0], 'dual':[False], 'class_weight':['balanced']} 
     svm = LinearSVC()
     tic = time.time()
     clf = GridSearchCV(svm, param_grid=param_grid, cv=10, refit=True)
     clf.fit(X, y)
-    print('time elapsed %f' % (time.time()-tic))
     bestClassifier = clf.best_estimator_
+    print('time elapsed %f' % (time.time()-tic))
+
+    #==== Random Forest (commented out for experimenting)
+    # rf = RandomForestClassifier()
+    # param_grid = {'n_estimators':[10, 50], 'max_depth':[2, 4], 'class_weight':['balanced_subsample']}
+    # tic = time.time()
+    # clf = GridSearchCV(rf, param_grid=param_grid, cv=10, refit=True)
+    # clf.fit(X, y)
+    # bestClassifier = clf
+    # print('time elapsed %f' % (time.time()-tic))
+
     cvBestScore = clf.best_score_
     print('best cv score (accuracy) = %f' % cvBestScore)
     return bestClassifier
@@ -108,18 +119,21 @@ def getAllClassifiers(X, y):
     # save all models 
     classifiers = []
     XTrain, XTest, yTrain, yTest = train_test_split(X, y, test_size=0.15, random_state=33)
-    # sub-sampling the training set
-    # dump, XTrain, dump, yTrain = train_test_split(XTrain, yTrain, test_size=0.05, random_state=33)
+    # sub-sampling the training set (test_size determines the sub-sampling size)
+    dump, XTrain, dump, yTrain = train_test_split(XTrain, yTrain, test_size=0.10, random_state=33)
     print('there are %d samples in the training set' % len(yTrain))
     XTrainScaled, maxVec, minVec = scaleMatrix(XTrain)
-    yBdTrain = adjustTarget4Instruments(yTrain, 0)
-    ySdTrain = adjustTarget4Instruments(yTrain, 1)
-    yHhTrain = adjustTarget4Instruments(yTrain, 2)
+    yBdTrain = [ele[0] for ele in yTrain]
+    ySdTrain = [ele[1] for ele in yTrain]
+    yHhTrain = [ele[2] for ele in yTrain]
+
+    # print(maxVec)
+    # print(minVec)
     
     XTestScaled = scaleMatrixWithMinMax(XTest, maxVec, minVec)
-    yBdTest = adjustTarget4Instruments(yTest, 0)
-    ySdTest = adjustTarget4Instruments(yTest, 1)
-    yHhTest = adjustTarget4Instruments(yTest, 2)
+    yBdTest = [ele[0] for ele in yTest]
+    ySdTest = [ele[0] for ele in yTest]
+    yHhTest = [ele[0] for ele in yTest]
 
     print('==== grid search on BD...')
     clfBestBd = gridSearchClassifier(XTrainScaled, yBdTrain)
@@ -147,13 +161,13 @@ def summarizeClassDistribution(y):
     sdCount = 0
     otCount = 0
     for drum in y:
-        if drum == 0:
+        if drum[0] == 1:
             bdCount += 1
-        elif drum == 1:
+        if drum[1] == 1:
             sdCount += 1
-        elif drum == 2:
+        if drum[2] == 1:
             hhCount += 1
-        else:
+        if np.sum(drum) == 0:
             otCount += 1
     print('bd = %d sd = %d hh = %d other = %d' % (bdCount, sdCount, hhCount, otCount))
     return()
@@ -169,10 +183,43 @@ def main():
             print('====================================')
             print('current feature = %s'% featureOption)
             print('current held out = %s'% heldOutOption)
-            summarizeClassDistribution(y_final)
+            #summarizeClassDistribution(y_final)
             classifiers, normParams = getAllClassifiers(X_final, y_final)
             classifierPath = getClassifierPath(heldOutOption, featureOption, saveFolder) 
-            np.savez(classifierPath, classifiers, normParams)   
+            np.savez(classifierPath, classifiers, normParams)  
+      
+            # #==== quick sanity check
+            # print('====================================')
+            # print('test on the held out dataset %s'% heldOutOption)
+            # heldOutDataPath = '../featureExtraction/featureMat/' + heldOutOption + 'List_' + featureOption + '.npz'
+            # tmp = np.load(heldOutDataPath)
+            # X = tmp['arr_0']
+            # y = tmp['arr_1']
+            # fileList = tmp['arr_2'] 
+            # #summarizeClassDistribution(y)
+
+            # tmp = np.load(classifierPath)
+            # classifiers = tmp['arr_0']
+            # normParams = tmp['arr_1']            
+            # clfBd = classifiers[0]
+            # clfSd = classifiers[1]
+            # clfHh = classifiers[2]
+
+            # maxVec = normParams[0]
+            # minVec = normParams[1]
+            # X = scaleMatrixWithMinMax(X, maxVec, minVec)
+
+            # yBdTest = [ele[0] for ele in y]
+            # ySdTest = [ele[1] for ele in y]
+            # yHhTest = [ele[2] for ele in y]
+
+            # bdScore = clfBd.score(X, yBdTest)
+            # sdScore = clfSd.score(X, ySdTest)
+            # hhScore = clfHh.score(X, yHhTest)
+
+            # print(bdScore)
+            # print(sdScore)
+            # print(hhScore)
     return()
 
 if __name__ == "__main__":

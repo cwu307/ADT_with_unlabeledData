@@ -1,5 +1,6 @@
 '''
 this script is used to build feature matrices
+note: this is used specifically for experimenting the "segment-classify paradigm"
 CW @ GTCMT 2017
 '''
 import numpy as np
@@ -46,20 +47,26 @@ def getFeatureMatrix(listPath, savePath, featureOption):
             features = extractBaselineFeatures(audioPath) #60 x M
         else:
             print('unknown feature option')
-
-        print(np.max(features))
-        print(np.min(features))
+        
+        numFeat, numBlock = np.shape(features)
 
         onsetInFrames, classInNum = parseAnnotations(annPath)
-        frontFrame = 1
+        frontFrame = 0
         rearFrame = 2
-        for j in range(0, len(classInNum)):
-            if classInNum[j] != 3:
-                midIndex = onsetInFrames[j]
-                splicedFeature = featureSplicing(features, midIndex, frontFrame, rearFrame)
-                X.append(splicedFeature)
-                y.append(classInNum[j])
-                originalFilePath.append(audioPath)
+
+        #==== take everything for training
+        # X: N by numFeat
+        # y: N by 3; list of tuples, each tuple is the binary representation of each drum
+        for j in range(0, numBlock):
+            splicedFeature = featureSplicing(features, j, frontFrame, rearFrame)
+            X.append(splicedFeature)
+            yBinary = np.zeros((3,))
+            for k in range(0, len(classInNum)):
+                if j == onsetInFrames[k]:
+                    if classInNum[k] != 3:
+                        yBinary[classInNum[k]] = 1 #note: 0=bd, 1=sd, 2=hh
+            y.append(yBinary)
+
     print(np.shape(X))
     print(np.shape(y))
     print('saving results to %s' % savePath)
@@ -83,10 +90,13 @@ def featureSplicing(features, midIndex, frontFrame, rearFrame):
     numFeature, numBlock = np.shape(features)
     splicedFeature = []
     for i in range(midIndex - frontFrame, midIndex + rearFrame + 1):
-        if i < 0 or i >= numBlock:
-            curFrame = np.zeros((numFeature,))
+        if i < 0:
+            curFrame = features[:, 0]
+        elif i >= numBlock:
+            curFrame = features[:, numBlock-1]
         else:
             curFrame = features[:, i]
+        
         if len(splicedFeature) == 0:
             splicedFeature = curFrame
         else:
@@ -142,7 +152,7 @@ def getSavePath(dataList, saveFolder, featureOptions):
 
 def main():
     allDataList = ['./dataLists/enstList.npy', './dataLists/mdbList.npy', './dataLists/rbmaList.npy', './dataLists/m2005List.npy']
-    allFeatureOptions = ['convRandom']#['baseline', 'convRandom']
+    allFeatureOptions = ['baseline', 'convRandom']
     for dataList in allDataList:
         for featureOption in allFeatureOptions:
             savePath = getSavePath(dataList, './featureMat/', featureOption)

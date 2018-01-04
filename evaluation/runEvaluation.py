@@ -4,12 +4,17 @@ CW @ GTCMT 2017
 '''
 import numpy as np
 from mir_eval.onset import f_measure
+from os.path import isdir
+from os import mkdir
 
 def evaluateEntireFolder(predictionListPath, methodOption):
     #loop through all files in the folder
     #record p, r, f per instrument per track
     #compute averages 
     #write txt file
+    if not isdir('./evaluationResults'):
+        mkdir('./evaluationResults')
+    
     filename = predictionListPath.split('/')[-1][0:-3]
     resultsTxtPath = './evaluationResults/' + methodOption + '_' + filename + 'txt' 
     predictionList = np.load(predictionListPath)

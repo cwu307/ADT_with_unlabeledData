@@ -4,7 +4,8 @@ CW @ GTCMT 2017
 '''
 import numpy as np
 from glob import glob
-from os import listdir
+from os import listdir, mkdir
+from os.path import isdir
 
 def getEnstDataList(dataDir):
     enstList = []
@@ -66,29 +67,35 @@ def displayList(dataList):
     return()
 
 
-# def main():
-#     enstDir = '/data/labeled_drum_datasets/CW_ENST_minus_one_wet_new_ratio/'
-#     enstList = getEnstDataList(enstDir)
-#     displayList(enstList)
-#     np.save('./dataLists/enstList.npy', enstList)
+def main_server():
+    if not isdir('./dataLists/'):
+        mkdir('./dataLists/')
 
-#     rbmaDir = '/data/labeled_drum_datasets/2017_mirex/RBMA/'
-#     rbmaList = getRbmaDataList(rbmaDir)
-#     displayList(rbmaList)
-#     np.save('./dataLists/rbmaList.npy', rbmaList)
+    enstDir = '/data/labeled_drum_datasets/CW_ENST_minus_one_wet_new_ratio/'
+    enstList = getEnstDataList(enstDir)
+    displayList(enstList)
+    np.save('./dataLists/enstList.npy', enstList)
 
-#     m2005Dir = '/data/labeled_drum_datasets/2017_mirex/2005/'
-#     m2005List = get2005List(m2005Dir)
-#     displayList(m2005List)
-#     np.save('./dataLists/m2005List.npy', m2005List)
+    rbmaDir = '/data/labeled_drum_datasets/2017_mirex/RBMA/'
+    rbmaList = getRbmaDataList(rbmaDir)
+    displayList(rbmaList)
+    np.save('./dataLists/rbmaList.npy', rbmaList)
 
-#     mdbDir = '/data/labeled_drum_datasets/MDB Drums/'
-#     mdblist = getMdbDataList(mdbDir)
-#     displayList(mdblist)
-#     np.save('./dataLists/mdbList.npy', mdblist)
-#     return()
+    m2005Dir = '/data/labeled_drum_datasets/2017_mirex/2005/'
+    m2005List = get2005List(m2005Dir)
+    displayList(m2005List)
+    np.save('./dataLists/m2005List.npy', m2005List)
 
-def main():
+    mdbDir = '/data/labeled_drum_datasets/MDB Drums/'
+    mdblist = getMdbDataList(mdbDir)
+    displayList(mdblist)
+    np.save('./dataLists/mdbList.npy', mdblist)
+    return()
+
+def main_local():
+    if not isdir('./dataLists/'):
+        mkdir('./dataLists/')
+
     enstDir = '/Volumes/CW_MBP15/Datasets/labeled_drum_datasets/CW_ENST_minus_one_wet_new_ratio/'
     enstList = getEnstDataList(enstDir)
     displayList(enstList)
@@ -112,7 +119,7 @@ def main():
 
 if __name__ == "__main__":
     print('running main() directly')
-    main()
+    main_server()
 
 
 

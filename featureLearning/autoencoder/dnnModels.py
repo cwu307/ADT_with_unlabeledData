@@ -36,10 +36,10 @@ def createAeModel(inputDim, inputDim2, embedDim, selectedOptimizer, selectedLoss
     encoded = Convolution2D(embedDim, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out4) #embedDim x 8 x 128
     
     out5 = UpSampling2D((2, 1), data_format='channels_first')(encoded)  
-    out5 = Convolution2D(16, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out5)  
+    out5 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out5)  
     out5 = BatchNormalization(axis=1)(out5)
     out6 = UpSampling2D((2, 1), data_format='channels_first')(out5)  
-    out6 = Convolution2D(16, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out6)  
+    out6 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out6)  
     out6 = BatchNormalization(axis=1)(out6)
     out7 = UpSampling2D((2, 1), data_format='channels_first')(out6)  
     out7 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out7)

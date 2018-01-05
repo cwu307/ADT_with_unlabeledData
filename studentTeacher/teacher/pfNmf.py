@@ -127,12 +127,7 @@ def main():
     X = stft(y, n_fft=2048, hop_length=512, win_length=2048, window='hann', center=True)
     X = abs(X)
     WD = np.load('./drumTemplates/template_enst_2048_512.npy')
-    WH = []
-    HH = []
-    HD = []
-    rh = 50
-    sparsity = 0.0
-    WD, HD, WH, HH, err = pfNmf(X, WD, HD, WH, HH, rh, sparsity)
+    WD, HD, WH, HH, err = pfNmf(X, WD, HD=[], WH=[], HH=[], rh=50, sparsity=0.0)
     plt.plot(HD[1, :])
     plt.show()
     return()

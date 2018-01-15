@@ -47,7 +47,7 @@ def getFeatureMatrix(listPath, savePath, featureOption):
             features = extractBaselineFeatures(audioPath) #60 x M
         else:
             print('unknown feature option')
-        
+
         numFeat, numBlock = np.shape(features)
 
         onsetInFrames, classInNum = parseAnnotations(annPath)
@@ -152,7 +152,7 @@ def getSavePath(dataList, saveFolder, featureOptions):
 
 def main():
     allDataList = ['./dataLists/enstList.npy', './dataLists/mdbList.npy', './dataLists/rbmaList.npy', './dataLists/m2005List.npy']
-    allFeatureOptions = ['baseline', 'convRandom']
+    allFeatureOptions = ['convDae']#['baseline', 'convRandom']
     for dataList in allDataList:
         for featureOption in allFeatureOptions:
             savePath = getSavePath(dataList, './featureMat/', featureOption)

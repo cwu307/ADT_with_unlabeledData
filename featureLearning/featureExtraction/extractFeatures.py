@@ -29,19 +29,17 @@ def extractConvFeatures(filePath, modelSavePath):
     y = np.divide(y, max(abs(y)))
     S = stft(y, n_fft=2048, hop_length=512, window='hann')
     inputMatrix = abs(S)
-    ext5Path = modelSavePath + 'ext5.h5'
-    ext5_model = load_model(ext5Path)
     numFreq, numBlock = np.shape(inputMatrix)
     inputTensor = prepareConvnetInput(inputMatrix)
-    lay5Out = ext5_model.predict(inputTensor, batch_size=1)  # N x 8 x 8 x 128
-    lay5OutFlat = flattenConvFeatures(lay5Out)
-    numFeat, numBlock2  = np.shape(lay5OutFlat)
+    selectedLayers = [1, 2, 3, 4, 5]
+    allLayerOutFlat = summarizeLayerOutput(inputTensor, modelSavePath, selectedLayers)
+    numFeat, numBlock2  = np.shape(allLayerOutFlat)
     #zero-padding here
     if numBlock > numBlock2:
         zpad = np.zeros((numFeat, numBlock - numBlock2))
-        convFeatures = np.concatenate((lay5OutFlat, zpad), axis=1)
+        convFeatures = np.concatenate((allLayerOutFlat, zpad), axis=1)
     else:
-        convFeatures = lay5OutFlat[:, 0:numBlock]
+        convFeatures = allLayerOutFlat[:, 0:numBlock]
     return convFeatures
 
 '''
@@ -56,21 +54,26 @@ def extractRandomConvFeatures(filePath, modelSavePath):
     y = np.divide(y, max(abs(y)))
     S = stft(y, n_fft=2048, hop_length=512, window='hann')
     inputMatrix = abs(S)
-    ext5Path = modelSavePath + 'ext5.h5'
-    ext5_model = load_model(ext5Path)
     numFreq, numBlock = np.shape(inputMatrix)
     inputTensor = prepareConvnetInput(inputMatrix)
-    lay5Out = ext5_model.predict(inputTensor, batch_size=1)  # N x 8 x 8 x 128
-    lay5OutFlat = flattenConvFeatures(lay5Out)
-    numFeat, numBlock2  = np.shape(lay5OutFlat)
+    selectedLayers = [1, 2, 3, 4, 5]
+    allLayerOutFlat = summarizeLayerOutput(inputTensor, modelSavePath, selectedLayers)
+    numFeat, numBlock2  = np.shape(allLayerOutFlat)
     #zero-padding here
     if numBlock > numBlock2:
         zpad = np.zeros((numFeat, numBlock - numBlock2))
-        convFeatures = np.concatenate((lay5OutFlat, zpad), axis=1)
+        convFeatures = np.concatenate((allLayerOutFlat, zpad), axis=1)
     else:
-        convFeatures = lay5OutFlat[:, 0:numBlock]
+        convFeatures = allLayerOutFlat[:, 0:numBlock]
     return convFeatures
 
+
+'''
+input:
+    inputTensor: float, ndarray
+output:
+    Bool: whether inputTensor contains nan or not
+'''
 def checkNan(inputTensor):
     nanCount = 0
     for element in np.nditer(inputTensor):
@@ -81,6 +84,27 @@ def checkNan(inputTensor):
         return True
     else:
         return False
+
+'''
+input:
+    inputTensor: float, ndarray, numSeq x numCh x numFreq x numBlock (stacked)
+    selectedLayers: int, array, selected layer output as features, ex. [1, 2, 3, 4, 5]
+output:
+    allLayerOutFlat: float, ndarray, numFeat x numBlock2 (flattened)
+'''
+def summarizeLayerOutput(inputTensor, modelSavePath, selectedLayers):
+    allLayerOutFlat = []
+    for layerNum in selectedLayers:
+        extractorPath = modelSavePath + 'ext' + str(layerNum) + '.h5'
+        extractorModel = load_model(extractorPath)
+        layerOut = extractorModel.predict(inputTensor, batch_size=1)
+        layerOutFlat = flattenConvFeatures(layerOut)
+        if len(allLayerOutFlat) == 0:
+            allLayerOutFlat = layerOutFlat
+        else:
+            allLayerOutFlat = np.concatenate((allLayerOutFlat, layerOutFlat), axis=0)
+    return allLayerOutFlat
+
 
 '''
 layerOutFlat = flattenConvFeatures(layerOut)
@@ -95,15 +119,26 @@ def flattenConvFeatures(layerOut):
     layerOutFlat = []
     for i in range(0, numSample):
         tmp1 = []
-        for j in range(0, numChannel):
+        for j in range(0, numChannel): 
             cur = layerOut[i, j, :, :]
-            cur = np.mean(cur, axis=0)
-            cur = np.expand_dims(cur, axis=0)
+            # cur = np.expand_dims(cur, axis=0)
+            # print(np.shape(cur))
+            # quit()
+
+            #==== summarize the features
+            #note: the activation maps are not stacked directly due to the potential zeros
+            curMean = np.mean(cur, axis=0)
+            curMean = np.expand_dims(curMean, axis=0)
+            # curStd  = np.std(cur, axis=0)
+            # curStd  = np.expand_dims(curStd, axis=0)
+            # cur = np.concatenate((curMean, curStd), axis=0)
+            cur = curMean
+            #==== concatenate vertically
             if len(tmp1) == 0:
                 tmp1 = cur
             else:  
                 tmp1 = np.concatenate((tmp1, cur), axis=0)
-        #combine rectangular feature maps
+        #==== concatenate horizontally
         if len(layerOutFlat) == 0:
             layerOutFlat = tmp1
         else:  

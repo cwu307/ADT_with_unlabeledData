@@ -23,26 +23,26 @@ def createAeModel(inputDim, inputDim2, embedDim, selectedOptimizer, selectedLoss
     out1 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(input) #32 x 128 x 128
     out1 = BatchNormalization(axis=1)(out1)
     out1 = MaxPooling2D((2, 1), padding='same', data_format='channels_first')(out1)  #32 x 64 x 128
-    out2 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out1) #32 x 64 x 128
+    out2 = Convolution2D(16, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out1) #16 x 64 x 128
     out2 = BatchNormalization(axis=1)(out2)
-    out2 = MaxPooling2D((2, 1), padding='same', data_format='channels_first')(out2) #32 x 32 x 128
-    out3 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out2) #16 x 32 x 128
+    out2 = MaxPooling2D((2, 1), padding='same', data_format='channels_first')(out2) #16 x 32 x 128
+    out3 = Convolution2D(8, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out2) #8 x 32 x 128
     out3 = BatchNormalization(axis=1)(out3)
-    out3 = MaxPooling2D((2, 1), padding='same', data_format='channels_first')(out3)  #16 x 16 x 128
-    out4 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out3) #16 x 16 x 128
+    out3 = MaxPooling2D((2, 1), padding='same', data_format='channels_first')(out3)  #8 x 16 x 128
+    out4 = Convolution2D(4, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out3) #4 x 16 x 128
     out4 = BatchNormalization(axis=1)(out4)
-    out4 = MaxPooling2D((2, 1), padding='same', data_format='channels_first')(out4)  #16 x 8 x 128
+    out4 = MaxPooling2D((2, 1), padding='same', data_format='channels_first')(out4)  #4 x 8 x 128
 
     encoded = Convolution2D(embedDim, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out4) #embedDim x 8 x 128
     
     out5 = UpSampling2D((2, 1), data_format='channels_first')(encoded)  
-    out5 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out5)  
+    out5 = Convolution2D(4, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out5)  
     out5 = BatchNormalization(axis=1)(out5)
     out6 = UpSampling2D((2, 1), data_format='channels_first')(out5)  
-    out6 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out6)  
+    out6 = Convolution2D(8, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out6)  
     out6 = BatchNormalization(axis=1)(out6)
     out7 = UpSampling2D((2, 1), data_format='channels_first')(out6)  
-    out7 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out7)
+    out7 = Convolution2D(16, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out7)
     out7 = BatchNormalization(axis=1)(out7)
     out8 = UpSampling2D((2, 1), data_format='channels_first')(out7)  
     out8 = Convolution2D(32, (3, 3), activation='relu', padding='same', data_format='channels_first', kernel_initializer=fixed_init)(out8)  

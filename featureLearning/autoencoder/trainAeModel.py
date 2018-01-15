@@ -6,6 +6,9 @@ CW @ GTCMT 2017
 import numpy as np
 import shutil
 import time
+import sys
+sys.path.insert(0, '../featureExtraction')
+from extractFeatures import prepareConvnetInput
 from keras.optimizers import Adam
 from keras.utils import to_categorical
 from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
@@ -16,7 +19,8 @@ from librosa.feature import melspectrogram
 from tensorboard_logger import configure, log_value
 from os.path import isdir
 from os import mkdir
-preprocessingFlag = True
+EMBEDDIM = 4
+CONTINUEFLAG = True
 
 def trainAeModel(sourceLists, targetLists, modelSavePath, tbpath):
     #==== define data path
@@ -27,7 +31,7 @@ def trainAeModel(sourceLists, targetLists, modelSavePath, tbpath):
     ext3Path = modelSavePath + 'ext3.h5'
     ext4Path = modelSavePath + 'ext4.h5'
     ext5Path = modelSavePath + 'ext5.h5'
-    shutil.rmtree(tbpath)
+    #shutil.rmtree(tbpath)
     configure(tbpath) #configure tensorboard logger
 
     #==== load all train-test split lists
@@ -43,13 +47,15 @@ def trainAeModel(sourceLists, targetLists, modelSavePath, tbpath):
     #==== define DNN parameters
     inputDim = 128
     inputDim2 = 128
-    embedDim = 32
+    embedDim = EMBEDDIM
     numEpochs = 10
     selectedOptimizer = Adam(lr=0.001)
     selectedLoss = 'mse'
     checker = ModelCheckpoint(check_path)
-    ae, ext1, ext2, ext3, ext4, ext5 = createAeModel(inputDim, inputDim2, embedDim, selectedOptimizer, selectedLoss)
-    #ae, ext1, ext2, ext3, ext4, ext5 = contineTraining(modelSavePath)
+    if CONTINUEFLAG:
+        ae, ext1, ext2, ext3, ext4, ext5 = contineTraining(modelSavePath)
+    else:
+        ae, ext1, ext2, ext3, ext4, ext5 = createAeModel(inputDim, inputDim2, embedDim, selectedOptimizer, selectedLoss)
 
     for e in range(0, numEpochs):
         print("==== epoch %d ====" % e)
@@ -86,14 +92,6 @@ def trainAeModel(sourceLists, targetLists, modelSavePath, tbpath):
         ext4.save(ext4Path)
         ext5.save(ext5Path)
 
-    print('saving final trained models...')
-    ae.save(ae_path)
-    ext1.save(ext1Path)
-    ext2.save(ext2Path)
-    ext3.save(ext3Path)
-    ext4.save(ext4Path)
-    ext5.save(ext5Path)
-
 
 def contineTraining(modelSavePath):
     ae_path = modelSavePath + 'ae.h5'
@@ -126,7 +124,7 @@ def getRandomWeightAeModel(modelSavePath):
     #==== define DNN parameters
     inputDim = 128
     inputDim2 = 128
-    embedDim = 32
+    embedDim = EMBEDDIM
     selectedOptimizer = Adam(lr=0.1)
     selectedLoss = 'mse'
     ae, ext1, ext2, ext3, ext4, ext5 = createAeModel(inputDim, inputDim2, embedDim, selectedOptimizer, selectedLoss)
@@ -145,19 +143,8 @@ def prepareData(sourceFilePath, targetFilePath):
     targetFilepathAdjusted = '../../preprocessData' + targetFilePath[1:]
     source = np.load(sourceFilepathAdjusted) 
     target = np.load(targetFilepathAdjusted)
-    source = melspectrogram(S=source, sr=44100, n_fft=2048, hop_length=512, power=2.0, n_mels=128, fmin=0.0, fmax=20000)
-    target = melspectrogram(S=target, sr=44100, n_fft=2048, hop_length=512, power=2.0, n_mels=128, fmin=0.0, fmax=20000)
-    source = np.expand_dims(source, axis=0)
-    target = np.expand_dims(target, axis=0)
-    if preprocessingFlag:
-        source = convert2dB(source)
-        target = convert2dB(target)
-    source = scaleTensorTrackwise(source)
-    target = scaleTensorTrackwise(target)
-    source = reshapeInputTensor(source)
-    target = reshapeInputTensor(target)
-    source = np.expand_dims(source, axis=1) #add batch dimension 1 x 1 x dim1 x dim2
-    target = np.expand_dims(target, axis=1)
+    source = prepareConvnetInput(source)
+    target = prepareConvnetInput(target)
     return source, target
 
 def main():
@@ -165,16 +152,16 @@ def main():
     stftPLists = '../../preprocessData/stft_p_train_test_splits.npy'
 
     #==== AE
-    print('Getting autoencoder models')
-    modelSavePath = './savedAeModels/'
-    tbpath = './tblogs/ae_run'
-    trainAeModel(sourceLists=stftLists, targetLists=stftLists, modelSavePath=modelSavePath, tbpath=tbpath)
+    # print('Getting autoencoder models')
+    # modelSavePath = './savedAeModels/'
+    # tbpath = './tblogs/ae_run'
+    # trainAeModel(sourceLists=stftLists, targetLists=stftLists, modelSavePath=modelSavePath, tbpath=tbpath)
 
     #==== DAE
-    # print('Getting denoising autoencoder models')
-    # modelSavePath = './savedDaeModels/'
-    # tbpath = './tblogs/dae_run'   
-    # trainAeModel(sourceLists=stftLists, targetLists=stftPLists, modelSavePath=modelSavePath, tbpath=tbpath)
+    print('Getting denoising autoencoder models')
+    modelSavePath = './savedDaeModels/'
+    tbpath = './tblogs/dae_run'   
+    trainAeModel(sourceLists=stftLists, targetLists=stftPLists, modelSavePath=modelSavePath, tbpath=tbpath)
 
     #==== Random Weights
     # print('Getting models with random weights')

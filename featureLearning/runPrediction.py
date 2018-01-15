@@ -219,7 +219,7 @@ def predictOneSongActivBased(audioPath, featureOption, clfModelPath):
 
 
 def main():
-    allFeatureOptions = ['baseline', 'convRandom']#, 'convAe', 'convDae']
+    allFeatureOptions = ['convDae']#['baseline', 'convRandom']#, 'convAe', 'convDae']
     allHeldOutOptions = ['enst', 'mdb', 'rbma', 'm2005']
     
     for featureOption in allFeatureOptions:

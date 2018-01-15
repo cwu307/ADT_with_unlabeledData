@@ -31,7 +31,7 @@ output:
     N/A, but the trained student model will be store to studentModelSavePath as defined by the user
 '''
 def trainStudent(sourceTrain, studentFullPath, studentType, teacher, normParamPath):
-    numEpoch = 30
+    numEpoch = 10
     
     #==== load DNN model
     print('%s model is selected' % studentType)
@@ -72,11 +72,12 @@ def trainStudent(sourceTrain, studentFullPath, studentType, teacher, normParamPa
                 # do something
 
             #==== training 
-            if not checkNan(y):
+            if not checkNan(yScaled):
                 studentModel.fit(X, yScaled, batch_size=640, epochs=1, verbose=0, shuffle=True)
                 results = studentModel.evaluate(X, yScaled, batch_size=19, verbose=1)
                 trainLoss = results[0]
                 allTrainLoss.append(trainLoss)
+                c += 1
             else:
                 print('nan found, skip this file')
 

@@ -3,8 +3,11 @@ this is the re-implementation of the PFNMF from https://github.com/cwu307/NmfDru
 CW @ GTCMT 2018
 '''
 import numpy as np
-REALMIN = np.finfo(float).tiny
 
+REALMIN = 10e-6#np.finfo(float).tiny
+HOPSIZE = 512
+WINSIZE = 2048
+FS = 44100.0
 '''
 partially fixed nonnegative matrix factorization
 input:
@@ -113,25 +116,56 @@ output:
     D: float, scalar, KL divergence
 '''
 def klDivergence(p, q):
-    D = np.sum(np.multiply(p, (np.log(p + REALMIN) - np.log(q + REALMIN))) - p + q)
+    pp = np.log(p + REALMIN)
+    qq = np.log(q + REALMIN)
+    D = np.sum(np.multiply(pp, (pp - qq)) - pp + qq)
     return D
 
 def main():
     # quick test of the implemented function
     from librosa import load
     from librosa.core import stft
-    import matplotlib.pyplot as plt
 
-    audioPath = '/Users/cw/Documents/CW_FILES/02_Github_repo/GTCMT/NmfDrumToolbox/demo/test_audio.wav'
-    y, sr = load(audioPath, sr=44100, mono=True)
-    X = stft(y, n_fft=2048, hop_length=512, win_length=2048, window='hann', center=True)
+    audioPath = 'test_audio.wav'
+    y, sr = load(audioPath, sr=FS, mono=True)
+    X = stft(y, n_fft=WINSIZE, hop_length=HOPSIZE, win_length=WINSIZE, window='hann', center=True)
     X = abs(X)
     WD = np.load('./drumTemplates/template_enst_2048_512.npy')
     WD, HD, WH, HH, err = pfNmf(X, WD, HD=[], WH=[], HH=[], rh=50, sparsity=0.0)
-    plt.plot(HD[1, :])
-    plt.show()
     return()
+
+def debug():
+    from librosa import load
+    from librosa.core import stft
+    import matplotlib.pyplot as plt
+    import sys
+    sys.path.insert(0, '../../featureLearning/')
+    from transcriptUtil import thresNvt, medianThreshold
+    ORDER = round(0.1 / (HOPSIZE / FS))
+    OFFSET = 0.12
+
+
+    dataListPath = '../../featureLearning/featureExtraction/dataLists/m2005List.npy'
+    dataList = np.load(dataListPath) 
+    audioPath, annPath = dataList[0]
+    y, sr = load(audioPath, sr=FS, mono=True)
+    X = stft(y, n_fft=WINSIZE, hop_length=HOPSIZE, win_length=WINSIZE, window='hann', center=True)
+    X = abs(X)
+    WD = np.load('./drumTemplates/template_200drums_2048_512.npy')
+    WD, HD, WH, HH, err = pfNmf(X, WD, HD=[], WH=[], HH=[], rh=50, sparsity=0.0)
+    nvt = HD[0, :]
+    nvt = np.divide(nvt, np.max(abs(nvt)))
+    thresCurve = medianThreshold(nvt, ORDER, OFFSET)
+    nvtNew = thresNvt(nvt, thresCurve)
+    plt.subplot(211)
+    plt.plot(nvt)
+    plt.subplot(212)
+    plt.plot(nvtNew)
+    plt.savefig('test_200d_bd.png', format='png')
+    return
+
 
 if __name__ == "__main__":
     print('running main() directly')
-    main()
+    #main()
+    debug()

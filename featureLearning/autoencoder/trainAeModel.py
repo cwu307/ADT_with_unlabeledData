@@ -152,16 +152,16 @@ def main():
     stftPLists = '../../preprocessData/stft_p_train_test_splits.npy'
 
     #==== AE
-    # print('Getting autoencoder models')
-    # modelSavePath = './savedAeModels/'
-    # tbpath = './tblogs/ae_run'
-    # trainAeModel(sourceLists=stftLists, targetLists=stftLists, modelSavePath=modelSavePath, tbpath=tbpath)
+    print('Getting autoencoder models')
+    modelSavePath = './savedAeModels/'
+    tbpath = './tblogs/ae_run'
+    trainAeModel(sourceLists=stftLists, targetLists=stftLists, modelSavePath=modelSavePath, tbpath=tbpath)
 
     #==== DAE
-    print('Getting denoising autoencoder models')
-    modelSavePath = './savedDaeModels/'
-    tbpath = './tblogs/dae_run'   
-    trainAeModel(sourceLists=stftLists, targetLists=stftPLists, modelSavePath=modelSavePath, tbpath=tbpath)
+    # print('Getting denoising autoencoder models')
+    # modelSavePath = './savedDaeModels/'
+    # tbpath = './tblogs/dae_run'   
+    # trainAeModel(sourceLists=stftLists, targetLists=stftPLists, modelSavePath=modelSavePath, tbpath=tbpath)
 
     #==== Random Weights
     # print('Getting models with random weights')

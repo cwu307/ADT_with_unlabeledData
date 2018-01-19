@@ -38,7 +38,7 @@ def trainStudent(sourceTrain, studentFullPath, studentType, teacher, normParamPa
     studentModel = load_model(studentFullPath)
 
     #==== handle save path
-    tbPath = './tblogs/' + teacher + '/'
+    tbPath = './tblogs/' + studentType + '/'
     if not isdir(tbPath):
         mkdir(tbPath)
 

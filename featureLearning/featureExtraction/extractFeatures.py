@@ -6,15 +6,17 @@ CW @ GTCMT 2017
 import numpy as np
 import sys
 sys.path.insert(0, '../autoencoder')
-
 from keras.models import load_model
 from keras.optimizers import Adam
 from librosa.feature import melspectrogram, mfcc
 from librosa.core import load, stft
-from FileUtil import reshapeInputTensor, convert2dB, scaleTensorTrackwise
+from FileUtil import reshapeInputTensor, scaleTensorTrackwise
 from dnnModels import createAeModel
 from FileUtil import averageActivationMap, standardizeTensorTrackwise, normalizeTensorTrackwiseL1, convert2dB
 
+HOPSIZE = 512
+WINSIZE = 2048
+FS = 44100.0
 
 '''
 convFeatures = extractConvFeatures(filePath, modelSavePath)
@@ -25,9 +27,9 @@ output:
     convFeatures: ndarray, numFeatures x numBlock
 '''
 def extractConvFeatures(filePath, modelSavePath):
-    y, sr = load(filePath, sr=44100, mono=True)
+    y, sr = load(filePath, sr=FS, mono=True)
     y = np.divide(y, max(abs(y)))
-    S = stft(y, n_fft=2048, hop_length=512, window='hann')
+    S = stft(y, n_fft=WINSIZE, hop_length=HOPSIZE, window='hann')
     inputMatrix = abs(S)
     numFreq, numBlock = np.shape(inputMatrix)
     inputTensor = prepareConvnetInput(inputMatrix)
@@ -50,9 +52,9 @@ output:
     convFeatures: ndarray, numFeatures x numBlock
 '''
 def extractRandomConvFeatures(filePath, modelSavePath):
-    y, sr = load(filePath, sr=44100, mono=True)
+    y, sr = load(filePath, sr=FS, mono=True)
     y = np.divide(y, max(abs(y)))
-    S = stft(y, n_fft=2048, hop_length=512, window='hann')
+    S = stft(y, n_fft=WINSIZE, hop_length=HOPSIZE, window='hann')
     inputMatrix = abs(S)
     numFreq, numBlock = np.shape(inputMatrix)
     inputTensor = prepareConvnetInput(inputMatrix)
@@ -155,7 +157,7 @@ output:
     dim2 = dim1
 '''
 def prepareConvnetInput(inputMatrix):    
-    inputMatrixMel = melspectrogram(S=inputMatrix, sr=44100, n_fft=2048, hop_length=512, power=2.0, n_mels=128, fmin=0.0, fmax=20000)
+    inputMatrixMel = melspectrogram(S=inputMatrix, sr=FS, n_fft=WINSIZE, hop_length=HOPSIZE, power=2.0, n_mels=128, fmin=0.0, fmax=20000)
     inputTensor = np.expand_dims(inputMatrixMel, axis=0) #add a dummy dimension for sample count
     inputTensor = convert2dB(inputTensor) #the input is the power of mel spectrogram
     inputTensor = scaleTensorTrackwise(inputTensor) #scale the dB scaled tensor to range of {0, 1}
@@ -176,7 +178,7 @@ output:
                        20 delta delta MFCCs]
 '''
 def extractBaselineFeatures(filePath):
-    y, sr = load(filePath, sr=44100, mono=True)
+    y, sr = load(filePath, sr=FS, mono=True)
     y = np.divide(y, max(abs(y)))    
     mfccs = mfcc(y=y, sr=sr, n_mfcc=20)
     dMfccs = np.zeros(np.shape(mfccs))

@@ -152,9 +152,10 @@ def getSavePath(dataList, saveFolder, featureOptions):
 
 def main():
     allDataList = ['./dataLists/enstList.npy', './dataLists/mdbList.npy', './dataLists/rbmaList.npy', './dataLists/m2005List.npy']
-    allFeatureOptions = ['convDae']#['baseline', 'convRandom']
+    allFeatureOptions = ['convAe']#['baseline', 'convRandom']
     for dataList in allDataList:
         for featureOption in allFeatureOptions:
+            print('data = %s, feature = %s' % (dataList, featureOption))
             savePath = getSavePath(dataList, './featureMat/', featureOption)
             getFeatureMatrix(dataList, savePath, featureOption)
     return()

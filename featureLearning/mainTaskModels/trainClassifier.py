@@ -174,7 +174,7 @@ def summarizeClassDistribution(y):
 
 def main():
     saveFolder = './trainedClassifier/'
-    allFeatureOptions = ['convDae']#['baseline', 'convRandom']#, 'convAe', 'convDae']
+    allFeatureOptions = ['convAe']#['baseline', 'convRandom']#, 'convAe', 'convDae']
     allHeldOutOptions = ['enst', 'mdb', 'rbma', 'm2005']
     
     for featureOption in allFeatureOptions:

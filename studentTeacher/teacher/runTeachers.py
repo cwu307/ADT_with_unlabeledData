@@ -3,12 +3,19 @@ this script applies different systems on the unlabeled data and generate soft ta
 CW @ GTCMT 2018
 '''
 import numpy as np
+import time
+import sys
 from os.path import isdir, isfile
 from os import mkdir, makedirs
 from pfNmf import pfNmf
 from ADTLib import ADT
 from scipy import signal
-import time
+
+
+HOPSIZE = 512
+WINSIZE = 2048
+FS = 44100.0
+
 
 def runPfNmf(sourceLists, saveFolder, templatePath):
     if not isdir(saveFolder):
@@ -29,7 +36,19 @@ def runPfNmf(sourceLists, saveFolder, templatePath):
         
         #==== perform NMF
         if isfile(saveFilePath):
-            print('file exists, next!')
+            print('file exists, check nan!')
+            HD = np.load(saveFilePath)
+            if checkNan(HD):
+                print('nan exists, running pfnmf again...')
+                X = np.load(sourceFilepathAdjusted)
+                X = abs(X)
+                tic = time.time()
+                WD, HD, WH, HH, err = pfNmf(X, WD, HD=[], WH=[], HH=[], rh=50, sparsity=0.0)
+                print((time.time()-tic))
+                print('done, saving the results')
+                np.save(saveFilePath, HD)
+            else:
+                print('no nan, moving on!')
         else:
             X = np.load(sourceFilepathAdjusted)
             X = abs(X)
@@ -37,16 +56,6 @@ def runPfNmf(sourceLists, saveFolder, templatePath):
             WD, HD, WH, HH, err = pfNmf(X, WD, HD=[], WH=[], HH=[], rh=50, sparsity=0.0)
             print((time.time()-tic))
             np.save(saveFilePath, HD)
-    
-    # print('Processing %d validation files' % len(sourceVal))
-    # for sourceFilePath, genre in sourceVal:
-    #     print('working on %s' % sourceFilePath)
-    #     sourceFilepathAdjusted = '../../preprocessData' + sourceFilePath[1:]
-    #     X = np.load(sourceFilepathAdjusted)
-    #     X = abs(X)
-    #     WD, HD, WH, HH, err = pfNmf(X, WD, HD=[], WH=[], HH=[], rh=50, sparsity=0.0)
-    #     saveFilePath = saveFolder + 'validation/' + sourceFilePath.split('./stft/')[1]
-    #     np.save(saveFilePath, HD)
     return ()
 
 def runAdtlib(sourceLists, saveFolder):
@@ -70,27 +79,96 @@ def runAdtlib(sourceLists, saveFolder):
             print('working on %s' % adjustedSourcePath)
             X = np.load(stftSourcePath)
             numFreq, numBlock = np.shape(X)
-            print(np.shape(X))
-            allActiv = useAdtlibSingleFile(adjustedSourcePath, numBlock)
+            predictions, allActiv = useAdtlibSingleFile(adjustedSourcePath)
+            allActiv = cropAdtlibResults(allActiv, duration=29, startLoc='middle')
+            assert(numBlock == np.size(allActiv, 1))
             np.save(saveFilePath, allActiv)
     return ()
 
-def useAdtlibSingleFile(audioPath, targetNumBlock):
+
+'''
+input:
+    inputTensor: float, ndarray
+output:
+    Bool: whether inputTensor contains inf or not
+'''
+def checkInf(inputTensor):
+    infCount = 0
+    for element in np.nditer(inputTensor):
+        if np.isinf(element):
+            infCount += 1
+
+    if infCount > 0:
+        return True
+    else:
+        return False
+
+'''
+input:
+    inputTensor: float, ndarray
+output:
+    Bool: whether inputTensor contains nan or not
+'''
+def checkNan(inputTensor):
+    nanCount = 0
+    for element in np.nditer(inputTensor):
+        if np.isnan(element):
+            nanCount += 1
+
+    if nanCount > 0:
+        return True
+    else:
+        return False
+
+def useAdtlibSingleFile(audioPath):
     onsets, activations = ADT([audioPath], text='no', tab='no', save_dir='none', output_act='yes')
     activ = activations[0]
     activKd = activ[0][:, 0]
     activSd = activ[1][:, 0]
     activHh = activ[2][:, 0]
-    activKd_resampled = signal.resample(activKd, num=targetNumBlock)
-    activSd_resampled = signal.resample(activSd, num=targetNumBlock)
-    activHh_resampled = signal.resample(activHh, num=targetNumBlock)
-    activKd_resampled = np.expand_dims(activKd_resampled, axis=0)
-    activSd_resampled = np.expand_dims(activSd_resampled, axis=0)
-    activHh_resampled = np.expand_dims(activHh_resampled, axis=0)
-    allActiv = np.concatenate((activKd_resampled, activSd_resampled, activHh_resampled), axis=0)
-    return allActiv
+    activKd = np.expand_dims(activKd, axis=0)
+    activSd = np.expand_dims(activSd, axis=0)
+    activHh = np.expand_dims(activHh, axis=0)
+    allActiv = np.concatenate((activKd, activSd, activHh), axis=0)
 
+    onsetsSingleTrack = onsets[0]
+    onsetsKd = onsetsSingleTrack['Kick']
+    onsetsSd = onsetsSingleTrack['Snare']
+    onsetsHh = onsetsSingleTrack['Hihat']
 
+    allOnsetLists = [onsetsKd, onsetsSd, onsetsHh]
+    predictions = []
+    for i in range(0, len(allOnsetLists)):
+        for onsetInSec in allOnsetLists[i]:
+            if i == 0:
+                predictions.append((onsetInSec, 'KD'))
+            elif i == 1:
+                predictions.append((onsetInSec, 'SD'))
+            elif i == 2:
+                predictions.append((onsetInSec, 'HH'))
+    predictions = sorted(predictions)
+    return predictions, allActiv
+
+def cropAdtlibResults(allActiv, duration, startLoc):
+    durationInBlocks = round(float(duration)/(HOPSIZE/FS))
+    numDrums, numBlock = np.shape(allActiv)
+    if startLoc == 'beginning':
+        istart = 0
+    elif startLoc == 'middle':
+        istart = round(numBlock/2)
+    iend = istart + durationInBlocks
+
+    if iend > np.size(allActiv, 1):
+        istart = 0
+        iend = istart + durationInBlocks
+    if iend > np.size(allActiv, 1):
+        istart = 0
+        iend = istart + durationInBlocks
+        gap = iend - np.size(allActiv, 1)
+        zeropad = np.zeros((3, gap))
+        allActiv = np.concatenate((allActiv, zeropad), axis=1)
+    allActivCropped = allActiv[:, int(istart):int(iend)] 
+    return allActivCropped
 
 def unpackSourceLists(sourceLists):
     sourceAllLists = np.load(sourceLists)
@@ -101,7 +179,7 @@ def unpackSourceLists(sourceLists):
 
 def main():
     sourceLists = '../../preprocessData/stft_train_test_splits.npy'
-    allTeachers = ['adtlib']#['pfnmf_200d', 'pfnmf_smt', 'adtlib']
+    allTeachers = ['pfnmf_200d', 'pfnmf_smt']#['pfnmf_200d', 'pfnmf_smt', 'adtlib']
 
     #==== check saving folder
     if not isdir('./softTargets/'):

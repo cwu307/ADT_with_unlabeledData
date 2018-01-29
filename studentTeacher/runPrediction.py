@@ -43,6 +43,9 @@ def predictHeldOutDataset(heldOutOption, modelOption):
     for audioPath, annPath in dataList:
         print('processing %s ...' % audioPath)
         c += 1 #assign each prediction file a unique number
+        # if modelOption == 'adtlib':
+        #     predictions = predicdtOneSongAdtlib(audioPath)
+        # else:
         predictions = predictOneSongActivBased(audioPath, modelOption)
         predictionSavePath = getPredictionSavePath(annPath, saveFolder, 'txt', count=c)
         writeResults2File(predictions, predictionSavePath)
@@ -88,18 +91,41 @@ def getActivationFromFile(audioPath, modelOption):
         studentModel = load_model(modelPath)
         inputMatrix = np.transpose(inputMatrix)
         activMat = studentModel.predict(inputMatrix)
-    elif modelOption == 'FC':
+    elif modelOption == 'FC_600':
         from keras.models import load_model
         modelPath = './student/savedStudentModels/' + modelOption + '/studentModel.h5'
         studentModel = load_model(modelPath)
         inputMatrix = np.transpose(inputMatrix)
-        activMat = studentModel.predict(inputMatrix)
+        activMat = studentModel.predict(inputMatrix, batch_size=640)
     elif modelOption == 'adtlib':
-        numFreq, numBlock = np.shape(inputMatrix)
-        activMat = useAdtlibSingleFile(audioPath, numBlock) 
+        predictions, activMat = useAdtlibSingleFile(audioPath)
         activMat = np.transpose(activMat) #the dimensionality should be numBlock x numDrums
     return activMat
 
+
+def predicdtOneSongAdtlib(audioPath):
+    print('Special case: evaluating adtlib using its own setting')
+    predictions, activMat = useAdtlibSingleFile(audioPath) 
+    return predictions 
+
+
+def visualizeActivation(activMat):
+    import matplotlib.pyplot as plt
+    activBd = activMat[:, 0]
+    activSd = activMat[:, 1]
+    activHh = activMat[:, 2]
+    plt.subplot(311)
+    plt.plot(activBd)
+    plt.title('KD')
+    plt.subplot(312)
+    plt.plot(activSd)
+    plt.title('SD')
+    plt.subplot(313)
+    plt.plot(activHh)
+    plt.title('HH')
+    print('saving results to activTest.png')
+    plt.savefig('activTest.png', format='png')
+    return ()
 
 '''
 given the path to audio file, extract the selected feature and transcribe the drum events
@@ -117,9 +143,13 @@ def predictOneSongActivBased(audioPath, modelOption):
     activSd = activMat[:, 1]
     activHh = activMat[:, 2]
 
-    nvtBd = np.divide(activBd, np.max(activBd))
-    nvtSd = np.divide(activSd, np.max(activSd))
-    nvtHh = np.divide(activHh, np.max(activHh))
+    nvtBd = activBd
+    nvtSd = activSd
+    nvtHh = activHh
+
+    # nvtBd = np.divide(activBd, np.max(activBd))
+    # nvtSd = np.divide(activSd, np.max(activSd))
+    # nvtHh = np.divide(activHh, np.max(activHh))
 
     thresCurvBd = medianThreshold(nvtBd, ORDER, OFFSET)
     thresCurvSd = medianThreshold(nvtSd, ORDER, OFFSET)
@@ -143,7 +173,7 @@ def predictOneSongActivBased(audioPath, modelOption):
     return predictions
 
 def main():
-    allModelOptions = ['adtlib']#['pfnmf_200d', 'pfnmf_smt']#['FC', 'FCRandom', 'pfnmf_200d', 'pfnmf_smt'  ]
+    allModelOptions = ['FC_600']#['pfnmf_200d', 'pfnmf_smt']#['FC', 'FCRandom', 'pfnmf_200d', 'pfnmf_smt'  ]
     allHeldOutOptions = ['enst', 'mdb', 'rbma', 'm2005']
     
     for modelOption in allModelOptions:

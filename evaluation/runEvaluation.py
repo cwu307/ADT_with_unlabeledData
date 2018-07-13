@@ -146,10 +146,10 @@ def getPredictionListPath(methodOption, heldOutOption, featureOption):
 
 def main():
     parser = ap.ArgumentParser(description = "remember to select the learning paradigm for evaluation")
-    parser.add_argument('-f', help="str, studentTeacher or featureLearning", type=str, required=True)
+    parser.add_argument('-f', help="str, studentTeacher (default) or featureLearning", type=str, default='studentTeacher')
     arg = parser.parse_args()
     evalOption = arg.f
-
+    print('selected eval option is %s' % evalOption)
     if evalOption == 'featureLearning':
         methodOption = 'featureLearning'
         allFeatureOptions = ['convAe', 'convDae', 'baseline', 'convRandom']

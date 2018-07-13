@@ -15,10 +15,10 @@ This repository includes all the pre-trained machine learning models for conduct
 
 In addition to the models, this repository also includes the intermediate results from all the evaluated systems. To repeat the evaluation process, please enter the following commands in the terminal: 
 
-// >> cd evaluation
-// >> python runEvaluation.py -f 'studentTeacher' 
+    >> cd evaluation
+    >> python runEvaluation.py -f 'studentTeacher' 
 or 
-// >> python runEvaluation.py -f 'featureLearning'
+    >> python runEvaluation.py -f 'featureLearning'
 
 These commands will compare the groundtruth of the labeled datasets with the prediction results of the evaluated systems and generate the reports in
 './evaluation/evaluationResults/'

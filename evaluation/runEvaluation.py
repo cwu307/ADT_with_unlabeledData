@@ -139,7 +139,7 @@ def main():
     # allFeatureOptions = ['convAe']#['baseline', 'convRandom']#, 'convAe', 'convDae']
 
     methodOption = 'studentTeacher'
-    allFeatureOptions = ['FC_600']#['pfnmf_200d', 'pfnmf_smt']#['pfnmf_smt', 'pfnmf_200d']
+    allFeatureOptions = ['FC_200']#['pfnmf_200d', 'pfnmf_smt']#['pfnmf_smt', 'pfnmf_200d']
 
     allHeldOutOptions = ['enst', 'mdb', 'rbma', 'm2005']
     for heldOutOption in allHeldOutOptions:

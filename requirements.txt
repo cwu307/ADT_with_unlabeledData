@@ -1,2 +1,10 @@
-
-test
+scipy==1.0.0
+tensorboard_logger==0.0.4
+librosa==0.5.1
+Keras==2.0.8
+madmom==0.15.1
+matplotlib==2.0.0
+mir_eval==0.4
+numpy==1.13.3
+ADTLib==2.1.2
+scikit_learn==0.19.1

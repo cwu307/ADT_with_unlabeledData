@@ -17,7 +17,7 @@ In addition to the models, this repository also includes the intermediate result
 
     >> cd evaluation
     >> python runEvaluation.py -f 'studentTeacher' 
-or 
+    or 
     >> python runEvaluation.py -f 'featureLearning'
 
 These commands will compare the groundtruth of the labeled datasets with the prediction results of the evaluated systems and generate the reports in

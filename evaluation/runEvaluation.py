@@ -3,9 +3,17 @@ this script is to generate evaluation results!
 CW @ GTCMT 2017
 '''
 import numpy as np
+import argparse as ap
 from mir_eval.onset import f_measure
 from os.path import isdir
 from os import mkdir
+LOCAL_GROUNDTRUTH_FOLDER = "./groundTruth4Eval/"
+
+
+def adjustAnnPath(annPath):
+    annPath_adjusted = annPath.replace('/data/labeled_drum_datasets/', LOCAL_GROUNDTRUTH_FOLDER)
+    return annPath_adjusted
+
 
 def evaluateEntireFolder(predictionListPath, methodOption):
     #loop through all files in the folder
@@ -81,6 +89,8 @@ output:
 def evaluateSingleTrack(annPath, predPath):
     allDrums = [0, 1, 2]
     resultPerInst = []
+    annPath = adjustAnnPath(annPath)
+
     for i in range(0, len(allDrums)):
         targetDrumNum = allDrums[i]
         refOnsets = getTargetDrumOnsets(annPath, targetDrumNum)
@@ -135,11 +145,19 @@ def getPredictionListPath(methodOption, heldOutOption, featureOption):
     return predictionListPath
 
 def main():
-    # methodOption = 'featureLearning'
-    # allFeatureOptions = ['convAe']#['baseline', 'convRandom']#, 'convAe', 'convDae']
+    parser = ap.ArgumentParser(description = "remember to select the learning paradigm for evaluation")
+    parser.add_argument('-f', help="str, studentTeacher or featureLearning", type=str, required=True)
+    arg = parser.parse_args()
+    evalOption = arg.f
 
-    methodOption = 'studentTeacher'
-    allFeatureOptions = ['FC_200']#['pfnmf_200d', 'pfnmf_smt']#['pfnmf_smt', 'pfnmf_200d']
+    if evalOption == 'featureLearning':
+        methodOption = 'featureLearning'
+        allFeatureOptions = ['convAe', 'convDae', 'baseline', 'convRandom']
+    elif evalOption == 'studentTeacher':
+        methodOption = 'studentTeacher'
+        allFeatureOptions = ['FC_200', 'FC_1330', 'pfnmf_200d', 'pfnmf_smt']
+    else:
+        raise ValueError('invalid option, please choose between studentTeacher and featureLearning')
 
     allHeldOutOptions = ['enst', 'mdb', 'rbma', 'm2005']
     for heldOutOption in allHeldOutOptions:
